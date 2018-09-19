@@ -1,0 +1,3 @@
+/home/i62cumuj/FSIV/Practica1/build/CMakeFiles/rebuild_cache.dir
+/home/i62cumuj/FSIV/Practica1/build/CMakeFiles/edit_cache.dir
+/home/i62cumuj/FSIV/Practica1/build/CMakeFiles/prg1.dir
