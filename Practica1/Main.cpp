@@ -11,13 +11,13 @@ int main(int argc, char **argv){
    std::vector<int> hystogram(256,0);
    cv::Mat image=cv::imread(argv[1]);//opening the image
     if( image.rows==0) {std::cerr<<"Error reading image"<<std::endl;return 0;}
-
+   cv::Mat image2;
    cv::cvtColor(image,image,cv::COLOR_BGR2GRAY);
 
    
    cv::namedWindow("myimage");
    //displays the image in the window
    cv::imshow("myimage",image);
-
+   cv::waitKey(0);
 
 }
