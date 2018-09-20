@@ -111,17 +111,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named prg1
+# Target rules for targets named main
 
 # Build rule for target.
-prg1: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 prg1
-.PHONY : prg1
+main: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 main
+.PHONY : main
 
 # fast build rule for target.
-prg1/fast:
-	$(MAKE) -f CMakeFiles/prg1.dir/build.make CMakeFiles/prg1.dir/build
-.PHONY : prg1/fast
+main/fast:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/build
+.PHONY : main/fast
 
 Main.o: Main.cpp.o
 
@@ -129,7 +129,7 @@ Main.o: Main.cpp.o
 
 # target to build an object file
 Main.cpp.o:
-	$(MAKE) -f CMakeFiles/prg1.dir/build.make CMakeFiles/prg1.dir/Main.cpp.o
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/Main.cpp.o
 .PHONY : Main.cpp.o
 
 Main.i: Main.cpp.i
@@ -138,7 +138,7 @@ Main.i: Main.cpp.i
 
 # target to preprocess a source file
 Main.cpp.i:
-	$(MAKE) -f CMakeFiles/prg1.dir/build.make CMakeFiles/prg1.dir/Main.cpp.i
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/Main.cpp.i
 .PHONY : Main.cpp.i
 
 Main.s: Main.cpp.s
@@ -147,8 +147,35 @@ Main.s: Main.cpp.s
 
 # target to generate assembly for a file
 Main.cpp.s:
-	$(MAKE) -f CMakeFiles/prg1.dir/build.make CMakeFiles/prg1.dir/Main.cpp.s
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/Main.cpp.s
 .PHONY : Main.cpp.s
+
+auxiliarFunctions.o: auxiliarFunctions.cpp.o
+
+.PHONY : auxiliarFunctions.o
+
+# target to build an object file
+auxiliarFunctions.cpp.o:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/auxiliarFunctions.cpp.o
+.PHONY : auxiliarFunctions.cpp.o
+
+auxiliarFunctions.i: auxiliarFunctions.cpp.i
+
+.PHONY : auxiliarFunctions.i
+
+# target to preprocess a source file
+auxiliarFunctions.cpp.i:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/auxiliarFunctions.cpp.i
+.PHONY : auxiliarFunctions.cpp.i
+
+auxiliarFunctions.s: auxiliarFunctions.cpp.s
+
+.PHONY : auxiliarFunctions.s
+
+# target to generate assembly for a file
+auxiliarFunctions.cpp.s:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/auxiliarFunctions.cpp.s
+.PHONY : auxiliarFunctions.cpp.s
 
 # Help Target
 help:
@@ -158,10 +185,13 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... prg1"
+	@echo "... main"
 	@echo "... Main.o"
 	@echo "... Main.i"
 	@echo "... Main.s"
+	@echo "... auxiliarFunctions.o"
+	@echo "... auxiliarFunctions.i"
+	@echo "... auxiliarFunctions.s"
 .PHONY : help
 
 

@@ -20,6 +20,18 @@ opencv2/imgproc/imgproc.hpp
 opencv2/highgui/highgui.hpp
 -
 
+/home/i62cumuj/FSIV/Practica1/auxiliarFunctions.cpp
+auxiliarFunctions.hpp
+/home/i62cumuj/FSIV/Practica1/auxiliarFunctions.hpp
+vector
+-
+opencv2/core/core.hpp
+-
+opencv2/imgproc/imgproc.hpp
+-
+opencv2/highgui/highgui.hpp
+-
+
 /home/i62cumuj/FSIV/Practica1/auxiliarFunctions.hpp
 vector
 -
