@@ -44,7 +44,7 @@ int pixelVal(cv::Mat &image,int radius,int y,int x,int pixel);
 
 std::vector<int> getHistogram(std::vector< std::vector<int> > i);
 
-
+void masked(cv::Mat &image,cv::Mat &mask,std::vector<int> cumulativeHistogram);
 
 
 

@@ -32,18 +32,31 @@ int main(int argc, char **argv){
    
    //Transform BGR image to gray scale image
    cv::cvtColor(image,image,cv::COLOR_BGR2GRAY);
-  
+   
+   
    if(rValue==0){
-   //Getting the histogram from the image
+   //Getting the histogram from the image-
      histogram=getHistogram(image);
-     
+     if(argc==4){
+          cv::Mat mask=cv::imread(argv[auxVal]);
+          if( mask.rows==0) {std::cerr<<"Error reading image"<<std::endl;return 0;}
+          cv::cvtColor(image,image,cv::COLOR_BGR2GRAY);
+          if((mask.rows!=image.rows)||(mask.cols!=mask.cols)){
+              std::cout<<"Error, size differences between mask and image"<<std::endl;return 0;}
+          mask(image,mask,getCumulativeNormalizedHistogram(histogram));
+      }
+    else{
+   //equalizing the image
      equalizate(image,getCumulativeNormalizedHistogram(histogram));}
+   }
    
    else{
       image=equalizedRadiusImage(image,rValue);
      
       }
    cv::imwrite(argv[auxVal+1],image);
+  
+
 
 }
 
