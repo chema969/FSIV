@@ -21,7 +21,6 @@ std::vector<int> getHistogram(std::vector< std::vector<int> > i){
    std::vector<int> aux(256,0);
     for(unsigned int y=0;y<i.size();y++){
       for(unsigned int x=0;x<i[y].size();x++){
-        //std::cout<<"matriz"<<y<<","<<x<<"="<<i[y][x]<<std::endl;
         aux[i[y][x]]+=1;
        }
      }
@@ -72,6 +71,28 @@ void masked(cv::Mat &image,cv::Mat &mask,std::vector<int> cumulativeHistogram){
 }
 
 
+
+
+
+
+cv::Mat equalizedRadiusImage(cv::Mat &image,cv::Mat &mask,int rValue){
+    int radius=2*rValue+1;
+    cv::Mat image2(image.rows,image.cols,image.type());
+    for(int y=0;y<image2.rows;y++){
+      uchar *maskPtr=mask.ptr<uchar>(y);
+      uchar *ptr=image2.ptr<uchar>(y);
+      uchar *ptr2=image.ptr<uchar>(y);
+      for(int x=0;x<image2.cols;x++){
+        if(maskPtr[x]>0){
+         ptr[x]=pixelVal(image,radius,x,y,ptr2[x]);
+         }    
+        else{
+         ptr[x]=ptr2[x];
+         }
+       }
+     }
+  return image2;
+}
 
 
 
