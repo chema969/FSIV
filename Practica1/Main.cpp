@@ -18,24 +18,40 @@ const cv::String keys =
 int main(int argc, char **argv){
 try{
    cv::CommandLineParser parser(argc, argv, keys);
+ 
 
+  //////////////////////////////////////////
+  //command lines values                  //
+  //////////////////////////////////////////
    int rValue = parser.get<int>("r");
    std::string images = parser.get<std::string>(0);
    std::string image2 = parser.get<std::string>(1);
    std::string mask = parser.get<std::string>(2);
    bool bipartition = parser.has("b");
    
+   
    if((images=="")||(image2=="")){std::cout<<"Imput and output image needed"<<std::endl; return 0;}
  
-
+   
    std::vector<int> histogram;
    cv::Mat image=cv::imread(images);//opening the image
      if( image.rows==0) {std::cerr<<"Error reading image"<<std::endl;return 0;}
    
-   //Transform BGR image to gray scale image
-   cv::cvtColor(image,image,cv::COLOR_BGR2GRAY);
+   bool isBRG=false;
    
+   if(image.channels()==3){
+      isBRG=true;
+      cv::cvtColor(image,image,cv::COLOR_BGR2HSV);}
+
    
+   cv::Mat hsv[3];   //destination array
+   if(isBRG){
+     split(image,hsv);//split source  
+     image=hsv[1];
+    }
+
+
+
    if(rValue==0){
    //Getting the histogram from the image-
      histogram=getHistogram(image);
@@ -65,12 +81,17 @@ try{
          image=equalizedRadiusImage(image,maskIm,rValue);
          }
       }
+
+   if(isBRG){
+         hsv[2]=image;
+         cv::merge(hsv,3,image);
+     }     
    cv::imwrite(image2,image);
 
 }
 
 catch(std::exception &ex){
-
+  std::cout<<ex.what()<<std::endl;
 }
 
 
