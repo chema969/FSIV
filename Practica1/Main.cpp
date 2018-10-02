@@ -47,9 +47,8 @@ try{
    cv::Mat hsv[3];   //destination array
    if(isBRG){
      split(image,hsv);//split source  
-     image=hsv[1];
+     image=hsv[2].clone();
     }
-
 
 
    if(rValue==0){
@@ -83,9 +82,10 @@ try{
       }
 
    if(isBRG){
-         hsv[2]=image;
-         cv::merge(hsv,3,image);
+         hsv[2]=image.clone();
+         cv::merge(hsv,2,image);
      }     
+
    cv::imwrite(image2,image);
 
 }
