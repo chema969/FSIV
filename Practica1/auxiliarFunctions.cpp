@@ -69,7 +69,6 @@ std::vector<int> getCumulativeNormalizedHistogram(std::vector <int> histogram,bo
         aux[i]=(int)(((float)aux[i]/aux[255])*(255-v))+v;
      }
     }
-    for(unsigned int i=0;i<aux.size();i++) std::cout<<"Histograma["<<i<<"]="<<aux[i]<<std::endl;
     return aux; 
    }
 
