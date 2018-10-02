@@ -27,7 +27,7 @@ try{
    std::string images = parser.get<std::string>(0);
    std::string image2 = parser.get<std::string>(1);
    std::string mask = parser.get<std::string>(2);
-   bool bipartition = parser.has("b");
+   bool b = parser.has("b");
    
    
    if((images=="")||(image2=="")){std::cout<<"Imput and output image needed"<<std::endl; return 0;}
@@ -36,19 +36,21 @@ try{
    std::vector<int> histogram;
    cv::Mat image=cv::imread(images);//opening the image
      if( image.rows==0) {std::cerr<<"Error reading image"<<std::endl;return 0;}
+  
    
    bool isBRG=false;
    
    if(image.channels()==3){
       isBRG=true;
-      cv::cvtColor(image,image,cv::COLOR_BGR2HSV);}
-
+      cv::cvtColor(image,image,cv::COLOR_RGB2HSV,3);}
    
    cv::Mat hsv[3];   //destination array
    if(isBRG){
      split(image,hsv);//split source  
      image=hsv[2].clone();
     }
+
+
 
 
    if(rValue==0){
@@ -62,30 +64,31 @@ try{
 
           if((maskIm.rows!=image.rows)||(maskIm.cols!=image.cols)){
               std::cout<<"Error, size differences between mask and image"<<std::endl;return 0;}
-          masked(image,maskIm,getCumulativeNormalizedHistogram(histogram));
+          masked(image,maskIm,getCumulativeNormalizedHistogram(histogram,b));
           }
      else{
         //equalizing the image
-        equalizate(image,getCumulativeNormalizedHistogram(histogram));
+        equalizate(image,getCumulativeNormalizedHistogram(histogram,b));
         }
      }
 
    
    else{
       if(mask=="")
-         image=equalizedRadiusImage(image,rValue);
+         image=equalizedRadiusImage(image,rValue,b);
       else{
          cv::Mat maskIm=cv::imread(mask);
          cv::cvtColor(maskIm,maskIm,cv::COLOR_BGR2GRAY);
-         image=equalizedRadiusImage(image,maskIm,rValue);
+         image=equalizedRadiusImage(image,maskIm,rValue,b);
          }
       }
 
    if(isBRG){
          hsv[2]=image.clone();
-         cv::merge(hsv,2,image);
+         cv::merge(hsv,3,image);
+          cv::cvtColor(image,image,cv::COLOR_HSV2RGB);
      }     
-
+  
    cv::imwrite(image2,image);
 
 }

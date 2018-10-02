@@ -17,6 +17,9 @@ std::vector<int> getHistogram(cv::Mat &image){
 }
 
 
+
+
+
 std::vector<int> getHistogram(std::vector< std::vector<int> > i){
    std::vector<int> aux(256,0);
     for(unsigned int y=0;y<i.size();y++){
@@ -27,18 +30,61 @@ std::vector<int> getHistogram(std::vector< std::vector<int> > i){
   return aux;
 }
 
-std::vector<int> getCumulativeNormalizedHistogram(std::vector <int> histogram){
+
+
+
+
+std::vector<int> getCumulativeNormalizedHistogram(std::vector <int> histogram,bool b){
+   
      std::vector<int> aux(256);
      aux[0]=histogram[0];
      for(int i=1;i<256;i++){
         aux[i]=aux[i-1]+histogram[i];
        }
-     
+   if(!b){  
      for(int i=0;i<256;i++){
         aux[i]=(int)(((float)aux[i]/aux[255])*255);
      }
+   }
+   else{
+     int v=getMedian(aux);
+     aux.resize(256,0);
+
+     aux[0]=histogram[0];
+
+     for(int i=1;i<v;i++){
+       aux[i]=aux[i-1]+histogram[i];
+     }
+
+     for(int i=0;i<v;i++){
+        aux[i]=(int)(((float)aux[i]/aux[v-1])*(v-1));
+     }
+
+     aux[v]=histogram[v];
+
+     for(int i=v+1;i<256;i++){
+       aux[i]=aux[i-1]+histogram[i];
+     }
+     for(int i=v;i<256;i++){
+        aux[i]=(int)(((float)aux[i]/aux[255])*(255-v))+v;
+     }
+    }
+    for(unsigned int i=0;i<aux.size();i++) std::cout<<"Histograma["<<i<<"]="<<aux[i]<<std::endl;
     return aux; 
    }
+
+
+
+int getMedian(std::vector<int> cumulativeHistogram){
+     int medianVal=cumulativeHistogram[cumulativeHistogram.size()-1]/2;
+     int i=0;
+     while( cumulativeHistogram[i]<medianVal) i++;    
+    return i;
+}
+
+
+
+
 
 
 void equalizate(cv::Mat &image, std::vector<int> cumulativeHistogram){
@@ -75,7 +121,7 @@ void masked(cv::Mat &image,cv::Mat &mask,std::vector<int> cumulativeHistogram){
 
 
 
-cv::Mat equalizedRadiusImage(cv::Mat &image,cv::Mat &mask,int rValue){
+cv::Mat equalizedRadiusImage(cv::Mat &image,cv::Mat &mask,int rValue,bool b){
     int radius=2*rValue+1;
     cv::Mat image2(image.rows,image.cols,image.type());
     for(int y=0;y<image2.rows;y++){
@@ -84,7 +130,7 @@ cv::Mat equalizedRadiusImage(cv::Mat &image,cv::Mat &mask,int rValue){
       uchar *ptr2=image.ptr<uchar>(y);
       for(int x=0;x<image2.cols;x++){
         if(maskPtr[x]>0){
-         ptr[x]=pixelVal(image,radius,x,y,ptr2[x]);
+         ptr[x]=pixelVal(image,radius,x,y,ptr2[x],b);
          }    
         else{
          ptr[x]=ptr2[x];
@@ -102,14 +148,14 @@ cv::Mat equalizedRadiusImage(cv::Mat &image,cv::Mat &mask,int rValue){
 
 
 
-cv::Mat equalizedRadiusImage(cv::Mat &image,int rValue){
+cv::Mat equalizedRadiusImage(cv::Mat &image,int rValue,bool b){
     int radius=2*rValue+1;
     cv::Mat image2(image.rows,image.cols,image.type());
     for(int y=0;y<image2.rows;y++){
       uchar *ptr=image2.ptr<uchar>(y);
       uchar *ptr2=image.ptr<uchar>(y);
       for(int x=0;x<image2.cols;x++){
-        ptr[x]=pixelVal(image,radius,x,y,ptr2[x]);    
+        ptr[x]=pixelVal(image,radius,x,y,ptr2[x],b);    
        }
      }
   return image2;
@@ -117,7 +163,7 @@ cv::Mat equalizedRadiusImage(cv::Mat &image,int rValue){
 
 
 
-int pixelVal(cv::Mat &image,int radius,int x,int y,int pixel){
+int pixelVal(cv::Mat &image,int radius,int x,int y,int pixel,bool b){
    int xMinValue=x-radius;
    if(xMinValue<0) xMinValue=0;
    
@@ -148,7 +194,7 @@ int pixelVal(cv::Mat &image,int radius,int x,int y,int pixel){
     r++;
     }
 
-   std::vector<int> histogram=getCumulativeNormalizedHistogram(getHistogram(v));
+   std::vector<int> histogram=getCumulativeNormalizedHistogram(getHistogram(v),b);
    return histogram[pixel];
 
 }
