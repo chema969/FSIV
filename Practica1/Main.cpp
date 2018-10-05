@@ -42,7 +42,7 @@ try{
    
    if(image.channels()==3){
       isBRG=true;
-      cv::cvtColor(image,image,cv::COLOR_RGB2HSV,3);}
+      cv::cvtColor(image,image,cv::COLOR_BGR2HSV,3);}
    
    cv::Mat hsv[3];   //destination array
    if(isBRG){
@@ -86,7 +86,7 @@ try{
    if(isBRG){
          hsv[2]=image.clone();
          cv::merge(hsv,3,image);
-          cv::cvtColor(image,image,cv::COLOR_HSV2RGB);
+          cv::cvtColor(image,image,cv::COLOR_HSV2BGR);
      }     
   
    cv::imwrite(image2,image);
