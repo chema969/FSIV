@@ -2,6 +2,7 @@
 #include <iostream>
 #include "auxiliarFunctions.hpp"
 #include <opencv2/core/core.hpp> 
+#include<opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/utility.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -30,6 +31,7 @@ int main(int argc,char **argv){
    std::string image2 = parser.get<std::string>(1);
    
    cv::Mat image=cv::imread(image1,cv::IMREAD_GRAYSCALE);
+    image.convertTo(image, CV_32FC1);
    if(image.channels()!=1){
                std::cout<<"Error, no grayscale image"<<std::endl;
                return 0;}
@@ -38,10 +40,15 @@ int main(int argc,char **argv){
                std::cout<<"Error, radius value is less than 1"<<std::endl;
                return 0;}
    
-   cv::Mat output(image.rows,image.cols,CV_32FC1);
+   cv::Mat filtered(image.rows,image.cols,CV_32FC1);
    cv::Mat box=createBoxFilter(rValue*2+1); 
-   std::cout<<"Voy a aplicar el filtro"<<std::endl;
-   filt(image,box,output);
-   std::cout<<"salgo del filtro"<<std::endl;
+
+   filt(image,box,filtered);
+   
+   multiplyMat(image,gValue+1);
+   multiplyMat(filtered,gValue);
+ 
+   cv::Mat output(image.rows,image.cols,CV_32FC1);
+   convolve(image,filtered,output);
    cv::imwrite(image2,output);
  }

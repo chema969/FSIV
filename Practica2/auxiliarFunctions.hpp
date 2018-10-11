@@ -8,7 +8,7 @@
 cv::Mat createBoxFilter(int r);
 void filt(cv::Mat& in,cv::Mat& filter, cv::Mat& out);
 void convolve(const cv::Mat& in, const cv::Mat& filter, cv::Mat& out); 
-
+void multiplyMat(cv::Mat& in, int g);
 
 
 
