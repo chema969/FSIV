@@ -6,11 +6,11 @@
 #include <opencv2/highgui/highgui.hpp>
 
 cv::Mat createBoxFilter(int r);
-void filt(cv::Mat& in,cv::Mat& filter, cv::Mat& out);
+void filt(cv::Mat& in,cv::Mat& filter, cv::Mat& out,bool circular);
 void convolve(const cv::Mat& in, const cv::Mat& filter, cv::Mat& out); 
 void multiplyMat(cv::Mat& in, int g);
-
-
+cv::Mat createGaussianFilter(int r);
+double gauss(int x,int y);
 
 
 
