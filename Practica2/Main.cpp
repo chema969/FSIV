@@ -88,7 +88,6 @@ int main(int argc,char **argv){
 
 
   else{
-      cv::cvtColor(image,image,cv::COLOR_BGR2GRAY);
       image.convertTo(image, CV_32FC1); 
       cv::namedWindow("Values",0);
       cv::createTrackbar("r value","Values",&rValueSlider,50,slider);
@@ -98,14 +97,18 @@ int main(int argc,char **argv){
    cv::Mat copy=image.clone();
    resize(copy);
    cv::imshow("original",copy);
+
+
    char c=0;
    while(c!=27){  //waits until ESC pressed
 	c=cv::waitKey(0);
-        if(c==13){std::cout<<"saving image"<<std::endl;
+
+        if(c==10){std::cout<<"SAVING IMAGE"<<std::endl;
          cv::imwrite(image2,slideroutput);}
    } 
  }
 }
+
 
 
 
