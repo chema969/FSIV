@@ -63,7 +63,7 @@ double gauss(int x,int y){
 
 
 void filt(cv::Mat& in,cv::Mat& filter, cv::Mat& out,bool circular){
-
+    
   for(int y=0;y<in.rows;y++){
        float *ptr=out.ptr<float>(y);
        for(int x=0;x<in.cols;x++){
@@ -72,13 +72,13 @@ void filt(cv::Mat& in,cv::Mat& filter, cv::Mat& out,bool circular){
                int ry=0; int rx=0,l,m;
                for(int j=y-filter.rows/2;(j<=y+filter.rows/2)&&(!exit);j++){
 
-                    if(((j<0)||(j>in.rows))&&!circular){
+                    if(((j<0)||(j>=in.rows))&&!circular){
                     result=0;
                     exit=true;}
                   
                     else{
                
-                      if(((j<0)||(j>in.rows))&&circular) m=((j%in.rows)+in.rows)%in.rows;
+                      if(((j<0)||(j>=in.rows))&&circular) m=((j%in.rows)+in.rows)%in.rows;
                       else m=j;
                       float *ptrfilter=filter.ptr<float>(ry);
                       //std::cout<<"M="<<m<<std::endl;
@@ -87,12 +87,13 @@ void filt(cv::Mat& in,cv::Mat& filter, cv::Mat& out,bool circular){
 
                       for(int k=x-(filter.rows/2);(k<=x+filter.rows/2)&&(!exit);k++){
 
-                         if(((k<0)||(k>in.cols))&&!circular){
+                         if(((k<0)||(k>=in.cols))&&!circular){
+
                             result=0;
                             exit=true;
                             }
                          else{
-                            if(((k<0)||(k>in.cols))&&circular) l=((k%in.cols)+in.cols)%in.cols;
+                            if(((k<0)||(k>=in.cols))&&circular) l=((k%in.cols)+in.cols)%in.cols;
                             else l=k;
 
                              result+=(ptrfilter[rx]*ptrconv[l]);
@@ -122,6 +123,29 @@ void multiplyMat(cv::Mat& in, int g){
      }
 }
 
+
+
+void resize(cv::Mat& in){
+    for(int y=0;y<in.rows;y++){
+       float *ptr=in.ptr<float>(y);
+       for(int x=0;x<in.cols;x++){
+           ptr[x]=ptr[x]/255;
+          }
+     }
+}
+
+
+void unresize(cv::Mat& in){
+    for(int y=0;y<in.rows;y++){
+       float *ptr=in.ptr<float>(y);
+       for(int x=0;x<in.cols;x++){
+           ptr[x]=ptr[x]*255;
+          }
+     }
+}
+
+
+
 void convolve(const cv::Mat& in, const cv::Mat& filter, cv::Mat& out){
     for(int y=0;y<in.rows;y++){
        const float *ptrIn=in.ptr<const float>(y);
@@ -133,3 +157,6 @@ void convolve(const cv::Mat& in, const cv::Mat& filter, cv::Mat& out){
        }
     }
 }
+
+
+
