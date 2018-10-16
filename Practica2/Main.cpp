@@ -46,22 +46,9 @@ int main(int argc,char **argv){
    if(image.rows==0){
            std::cout<<"Error opening image"<<std::endl; return 0;}
 
-   isBRG=false;
-   
-  /* if(image.channels()==3){
-      isBRG=true;
-     image.convertTo(image, CV_32FC3);
-     
-      cv::cvtColor(image,image,cv::COLOR_BGR2HSV,3);}*/
-   
   
-   /*if(isBRG){
-     split(image,hsv);//split source 
-     image=hsv[2];
-   
-    }*/
 
-    if(!isBRG) image.convertTo(image, CV_32FC1);
+   
    if(image.channels()!=1){
                std::cout<<"Error, no grayscale image"<<std::endl;
                return 0;}
@@ -72,6 +59,9 @@ int main(int argc,char **argv){
    
 
   if(!i){
+   
+   
+   image.convertTo(image, CV_32FC1);
    cv::Mat filtered(image.rows,image.cols,CV_32FC1);
    cv::Mat filter;
   if(fValue==0)
@@ -88,11 +78,18 @@ int main(int argc,char **argv){
    cv::Mat output(image.rows,image.cols,CV_32FC1);
    convolve(image,filtered,output);
 
+
+
    cv::imwrite(image2,output);
   }
 
 
+
+
+
   else{
+      cv::cvtColor(image,image,cv::COLOR_BGR2GRAY);
+      image.convertTo(image, CV_32FC1); 
       cv::namedWindow("Values",0);
       cv::createTrackbar("r value","Values",&rValueSlider,50,slider);
       cv::createTrackbar("g value","Values",&gValueSlider,10,slider);
@@ -136,12 +133,7 @@ void slider(int, void*){
    convolve(something,filtered,output);
    slideroutput=output.clone();
    
-   /*if(isBRG){
-         hsv[2]=image;
-         cv::merge(hsv,3,image);
-          image.convertTo(image, CV_8UC3);
-          cv::cvtColor(image,image,cv::COLOR_HSV2BGR);
-     }     */
+ 
    resize(output);
    cv::namedWindow("myimage");
    //displays the image in the window

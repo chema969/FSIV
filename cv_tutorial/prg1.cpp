@@ -11,16 +11,11 @@
 using namespace std;
 int main(int argc,char **argv){
 try{
-  if(argc!=2) {cerr<<"Usage:image"<<endl;return 0;} 
-  //loads the image from file
    cv::Mat image=cv::imread(argv[1]);
    if( image.rows==0) {cerr<<"Error reading image"<<endl;return 0;}
-   //creates a window
-   cv::namedWindow("myimage");
-   //displays the image in the window
-   cv::imshow("myimage",image);
-   //wait for a key to be pressed
-   cv::waitKey(0);
+    cv::cvtColor(image,image,cv::COLOR_BGR2GRAY);
+    cv::imwrite("gandalf.jpg",image);
+    }
 }catch(std::exception &ex)
 {
   cout<<ex.what()<<endl;
