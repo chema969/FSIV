@@ -33,6 +33,13 @@ int main(int argc,char **argv){
    cv::VideoCapture video(input);
    
    while(video.read(frame)){
+       cv::Mat corners;
+       cv::Size xy(size,size);
+        cv::Mat frameButInGrey;
+        cvtColor(frame, frameButInGrey, COLOR_BGR2GRAY);
+        
+        cv::findChessboardCorners(frame,xy,corners);
+        cv::cornerSubPix(frameButInGrey,corners,xy
         cv::imshow("Live", frame);
         if (cv::waitKey(5) >= 0)
             break;
