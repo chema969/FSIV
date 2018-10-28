@@ -3,7 +3,7 @@
 #include <iostream>
 #include "auxiliarFunctions.hpp"
 #include <opencv2/core/core.hpp> 
-#include<opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/utility.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -33,16 +33,19 @@ int main(int argc,char **argv){
    cv::VideoCapture video(input);
    
    while(video.read(frame)){
+       aux l;
        cv::Mat corners;
-       cv::Size xy(size,size);
+       cv::Size xy(size/2,size/2);
         cv::Mat frameButInGrey;
-        cvtColor(frame, frameButInGrey, COLOR_BGR2GRAY);
+        cv::cvtColor(frame, frameButInGrey, cv::COLOR_BGR2GRAY);
         
         cv::findChessboardCorners(frame,xy,corners);
-        cv::cornerSubPix(frameButInGrey,corners,xy
-        cv::imshow("Live", frame);
+        //cv::cornerSubPix(frameButInGrey,corners,xy, cv::Size(-1,-1), cv::TermCriteria());
+        readYML(intrinsics,l);
+        cv::Mat rvec,tvec;
+       /* cv::imshow("Live", frame);
         if (cv::waitKey(5) >= 0)
-            break;
+            break;*/
   }
 
 
