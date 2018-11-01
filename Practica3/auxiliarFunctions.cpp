@@ -22,7 +22,10 @@ void readYML(std::string intrinsics,struct aux &l){
     fs["camera_matrix"]>>l.cameraMatrix1;
     fs["distortion_coefficients"]>>l.distortionCoefficient1;
     //std::cout/*<<l.time*/<<l.calibrationImageWidth <<l.calibrationImageHeight;
-
+    
 
 
        }
+
+
+
