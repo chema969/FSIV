@@ -17,7 +17,7 @@ const cv::String keys =
     "{i              |      | imput reflected img  }"
     "{w              |      | write                }"
     ;
-
+//bool condicion(cv::Point2f x,cv::Point2f y);
 int main(int argc,char **argv){
    
   cv::CommandLineParser parser(argc, argv, keys);
@@ -31,12 +31,17 @@ int main(int argc,char **argv){
    std::string intrinsics = parser.get<std::string>(3);
    std::string input = parser.get<std::string>(4);
    std::string ref=parser.get<std::string>("i");
-   std::string vidOut=parser.get<std::string>("w");
-
+   std::string vidOut=parser.get<std::string>("w"); 
 
    cv::Mat frame;
    cv::VideoCapture video(input);
   cv::VideoWriter vidWritt;
+
+   cv::VideoCapture prueba;
+   if(ref!=""){
+        prueba.open(ref);
+       }
+
    if(vidOut!=""){
      int ex = static_cast<int>(video.get(CV_CAP_PROP_FOURCC));     // Get Codec Type- Int form
     //char EXT[] = {(char)(ex & 0XFF) , (char)((ex & 0XFF00) >> 8),(char)((ex & 0XFF0000) >> 16),(char)((ex & 0XFF000000) >> 24), 0};
@@ -46,8 +51,11 @@ int main(int argc,char **argv){
    vidWritt.open(vidOut,ex,video.get(CV_CAP_PROP_FPS),S);
    }
   if(vidWritt.isOpened()) std::cout<<"Video output is open"<<std::endl;
-  else std::cout<<"xd"<<std::endl;
+
+
+
    while(video.read(frame)){
+
        aux l;
        std::vector<cv::Point2f>  corners;
        cv::Size xy(rows,cols);
@@ -88,7 +96,11 @@ int main(int argc,char **argv){
       
 
 else{
-      cv::Mat source=cv::imread(ref);
+      cv::Mat source;
+      if(prueba.read(source)==false){
+         prueba.release();
+         prueba.open(ref);
+         prueba.read(source); }
         std::vector<cv::Point2f> sourcePoints;
         std::vector<cv::Point3f> pointsProjected;
           pointsProjected.push_back(cv::Point3f((rows-1)*size,(cols-1)*size,0));
@@ -98,17 +110,24 @@ else{
        std::vector<cv::Point2f> output;  
             cv::projectPoints(cv::Mat(pointsProjected),cv::Mat(rvec), cv::Mat(tvec), l.cameraMatrix1,l.distortionCoefficient1, output);
 
+ 
+ 
 
-       sourcePoints.push_back(cv::Point2f(source.rows,0));               
-       sourcePoints.push_back(cv::Point2f(0,source.cols)); 
-       sourcePoints.push_back(cv::Point2f(0,0)); 
-      sourcePoints.push_back(cv::Point2f(source.rows,source.cols));
+       sourcePoints.push_back(cv::Point2f(0,0));   
+       sourcePoints.push_back(cv::Point2f(source.cols,source.rows));
+       sourcePoints.push_back(cv::Point2f(source.cols,0)); 
+       sourcePoints.push_back(cv::Point2f(0,source.rows));             
+
+
+ 
       cv::Size x=cv::Size((int) video.get(CV_CAP_PROP_FRAME_WIDTH),    //Acquire input size
               (int) video.get(CV_CAP_PROP_FRAME_HEIGHT));
       cv::Mat H = findHomography(sourcePoints, output);
       cv::Mat M=getPerspectiveTransform(sourcePoints, output);
-      
-      cv::warpPerspective(source, frame, H, x);
+
+      cv::warpPerspective(source, frame, H, x,cv::INTER_LINEAR,cv::BORDER_TRANSPARENT);
+
+
        }
   }   
        cv::imshow("Live", frame);
@@ -127,3 +146,8 @@ else{
 
 
   }
+
+
+/*
+bool condicion(cv::Point2f a,cv::Point2f b){
+      if((a.x+a.y)>*/
