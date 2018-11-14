@@ -31,12 +31,12 @@ int main (int argc, char * const argv[])
   bool cameraInput=false;
   bool useWhitePatchCorrecction=false;
   bool useChromaticCooridnates=false;
-  int threshold;
+  int thresh;
   const char * filein = 0;
   const char * fileout = 0;
   char opt;
   
-  int optind = 1; // TODO: mjmarin!!!
+  int optind = 1;
 
   TCLAP::CmdLine cmd("Video segmentation", ' ', "0.1");
 
@@ -53,6 +53,11 @@ int main (int argc, char * const argv[])
 
   filein = filename.getValue().c_str();
   fileout = outname.getValue().c_str();
+  thresh = thres.getValue();
+  if(thresh<0){
+      cout<<"Threshold is under 0, abbort"<<endl;
+      return 0;
+      }
 
   std::cout << "Input stream:" << filein << endl;
   std::cout << "Output:" << fileout << endl;
@@ -95,7 +100,9 @@ int main (int argc, char * const argv[])
   Mat outFrame = Mat::zeros(inFrame.size(), CV_8UC1);
   
   VideoWriter output;
-  output.open(fileout, CV_FOURCC('M','J','P','G'), fps, inFrame.size(), 0);
+  cv::Size S = cv::Size(inFrame.cols,inFrame.rows);    //Acquire input size
+             
+  output.open(fileout, CV_FOURCC('M','J','P','G'), fps, S, 0);
   if (!output.isOpened())
   {
     cerr << "Error: the ouput stream is not opened.\n";
@@ -106,19 +113,23 @@ int main (int argc, char * const argv[])
 
   cv::namedWindow("Output");
 
-  while(wasOk && key!=27 && wasOk2)
+  while(wasOk && key!=27 )
   {
      wasOk2 = inputFrame2.read(fram2);
-     frameNumber++;
+     if(wasOk2){
+       frameNumber++;
         
-     cv::imshow ("Input", inFrame);    
+       cv::imshow ("Input", inFrame);    
      
 	 // Do your processing
-     absdiff(inFrame,fram2,outFrame);
-
-     cv::imshow ("Output", outFrame);
-     
+       absdiff(inFrame,fram2,outFrame);
+       threshold(outFrame,outFrame,thresh,255,THRESH_TOZERO);
+       cv::imshow ("Output", outFrame);
+     cout<<outFrame.rows<<","<<outFrame.cols<<","<<outFrame.channels()<<endl;
+     output.write(inFrame);
+     }
      wasOk=input.read(inFrame);
+
      key = cv::waitKey(20);
      
   }           
