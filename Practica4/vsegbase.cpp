@@ -24,6 +24,7 @@ using namespace cv;
 /*
   Use CMake to compile
 */
+void threshfunction(int,char*);
 
 int main (int argc, char * const argv[])
 {
@@ -48,12 +49,15 @@ int main (int argc, char * const argv[])
   TCLAP::ValueArg<int> thres("t", "threshold", "Threshold value", false, 13, "int");
   cmd.add(thres);
   
+  TCLAP::ValueArg<int> radius("t", "threshold", "Threshold value", false, 0, "int");
+  cmd.add(radius);
   // Parse input arguments
   cmd.parse(argc, argv);
 
   filein = filename.getValue().c_str();
   fileout = outname.getValue().c_str();
-
+  
+  int r = radius.getValue();
   std::cout << "Input stream:" << filein << endl;
   std::cout << "Output:" << fileout << endl;
 
@@ -117,10 +121,36 @@ int main (int argc, char * const argv[])
      absdiff(inFrame,fram2,outFrame);
 
      cv::imshow ("Output", outFrame);
+ 
+
+     cv::namedWindow("Values",0);
+     cv::createTrackbar("r value","Values",&thresh,50,threshfunction);
+    
+     Mat opening;
+     Mat close;
+     if(r>0){
+     	Mat kern=getStructuringElement(MORPH_RECT, r*2+1);
      
+        	//Doing the opening process
+     	erode(output,opening,kern); 
+     	dilate(opening,opening,kern);
+
+        	//Doing the closing process
+     	dilate(output,close,kern); 
+     	erode(close,close,kern); 
+    
+     	output=opening+close;
+           }
      wasOk=input.read(inFrame);
      key = cv::waitKey(20);
      
   }           
   return 0;
+}
+
+
+void threshfunction(int,char*){
+
+  threshold(frame,output,thresh,255,THRESH_TOZERO);
+
 }
