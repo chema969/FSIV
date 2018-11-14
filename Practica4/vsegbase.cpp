@@ -24,6 +24,7 @@ using namespace cv;
 /*
   Use CMake to compile
 */
+void threshfunction(int,char*);
 
 int main (int argc, char * const argv[])
 {
@@ -48,16 +49,21 @@ int main (int argc, char * const argv[])
   TCLAP::ValueArg<int> thres("t", "threshold", "Threshold value", false, 13, "int");
   cmd.add(thres);
   
+  TCLAP::ValueArg<int> radius("r", "radius", "Radius value", false, 0, "int");
+  cmd.add(radius);
   // Parse input arguments
   cmd.parse(argc, argv);
 
   filein = filename.getValue().c_str();
   fileout = outname.getValue().c_str();
+
   thresh = thres.getValue();
   if(thresh<0){
       cout<<"Threshold is under 0, abbort"<<endl;
       return 0;
       }
+ 
+  int r = radius.getValue();
 
   std::cout << "Input stream:" << filein << endl;
   std::cout << "Output:" << fileout << endl;
@@ -122,16 +128,43 @@ int main (int argc, char * const argv[])
        cv::imshow ("Input", inFrame);    
      
 	 // Do your processing
+
        absdiff(inFrame,fram2,outFrame);
        threshold(outFrame,outFrame,thresh,255,THRESH_TOZERO);
-       cv::imshow ("Output", outFrame);
-     cout<<outFrame.rows<<","<<outFrame.cols<<","<<outFrame.channels()<<endl;
-     output.write(inFrame);
-     }
+
+     cv::imshow ("Output", outFrame);
+ 
+
+     /*cv::namedWindow("Values",0);
+     cv::createTrackbar("r value","Values",&thresh,50,threshfunction);
+    */
+     Mat opening;
+     Mat close;
+     if(r>0){
+     	Mat kern=getStructuringElement(MORPH_RECT, Size(r*2+1,r*2+1),Point( r, r ));
+     
+        	//Doing the opening process
+     	erode(outFrame,opening,kern); 
+     	dilate(outFrame,opening,kern);
+
+        	//Doing the closing process
+     	dilate(outFrame,close,kern); 
+     	erode(close,close,kern); 
+    
+     	outFrame=opening+close;
+           }
+     cv::imshow ("Output", outFrame);
      wasOk=input.read(inFrame);
 
      key = cv::waitKey(20);
-     
+     }
   }           
   return 0;
+}
+
+
+void threshfunction(int,char*){
+
+  //threshold(frame,output,thresh,255,THRESH_TOZERO);
+
 }
