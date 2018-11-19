@@ -7,4 +7,4 @@ include_directories(${CMAKE_SOURCE_DIR}/tclap-1.2.1/include ${OpenCV_INCLUDE_DIR
 LINK_LIBRARIES(${OpenCV_LIBS})
 
 add_executable(vseg vseg.cpp)
-add_executable(vseg2 vseg.cpp)
+add_executable(vseg2 vseg2.cpp)

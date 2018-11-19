@@ -2,7 +2,7 @@
    (c) Fundamentos de Sistemas Inteligenties en Vision
    University of Cordoba, Spain  
 */
-
+#include <cassert>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -20,8 +20,18 @@
 
 using namespace std;
 using namespace cv;
-  int thresh;
+  float typical;
  Mat outFrame;
+
+struct model{
+  double mean;
+  double stdDev;
+};
+
+double standardDev(double a, double b, double c);
+double calcMean(double a, double b, double c);
+bool isInteger(const std::string & s);
+void setWebcamParams(VideoCapture &inputFrame2,VideoCapture &input);
 /*
   Use CMake to compile
 */
@@ -32,10 +42,12 @@ int main (int argc, char * const argv[])
   bool cameraInput=false;
   bool useWhitePatchCorrecction=false;
   bool useChromaticCooridnates=false;
+  int bVal,cVal;
   const char * filein = 0;
   const char * fileout = 0;
   char opt;
-  
+  bool webcam=false;
+  float alpha;
   int optind = 1;
 
   TCLAP::CmdLine cmd("Video segmentation", ' ', "0.1");
@@ -45,24 +57,38 @@ int main (int argc, char * const argv[])
   TCLAP::ValueArg<std::string> outname("o", "outfilename", "Output video path", true, "out.avi", "string");
   cmd.add(outname);
   
-  TCLAP::ValueArg<int> thres("t", "threshold", "Threshold value", false, 13, "int");
-  cmd.add(thres);
+  TCLAP::ValueArg<float> typ("t", "threshold", "Typical value", false, 2.5, "float");
+  cmd.add(typ);
   
-  TCLAP::ValueArg<int> radius("s", "radius", "Radius value", false, 0, "int");
-  cmd.add(radius);
+  TCLAP::ValueArg<int> firstXFram("b", "radius", "First x frame values", false, 100, "int");
+  cmd.add(firstXFram);
+
+  TCLAP::ValueArg<int> ChangeFreq("c", "changefreq", "Change frequency", false, 10, "int");
+  cmd.add(ChangeFreq);
+
+  TCLAP::ValueArg<float> alp("a", "alpha", "Alpha value", false, 0.1, "float");
+  cmd.add(alp);
+  
   // Parse input arguments
   cmd.parse(argc, argv);
 
   filein = filename.getValue().c_str();
   fileout = outname.getValue().c_str();
 
-  thresh = thres.getValue();
-  if(thresh<0){
-      cout<<"Threshold is under 0, abbort"<<endl;
+  typical = typ.getValue();
+
+  if(typical<0){
+      cout<<"T value is under 0, abbort"<<endl;
       return 0;
       }
  
-  int r = radius.getValue();
+  bVal = firstXFram.getValue();
+  if(bVal<0){
+      cout<<"B value is under 0, abbort"<<endl;
+      return 0;
+      }
+  cVal = ChangeFreq.getValue();
+  alpha= alp.getValue();
 
   std::cout << "Input stream:" << filein << endl;
   std::cout << "Output:" << fileout << endl;
@@ -86,7 +112,7 @@ int main (int argc, char * const argv[])
     abort();
   }
 
-  cv::Mat fram2;
+ 
   Mat inFrame;
   bool wasOk = input.read(inFrame);
   if (!wasOk)
@@ -94,15 +120,24 @@ int main (int argc, char * const argv[])
     cerr << "Error: could not read any image from stream.\n";
     abort();
   }
+      inFrame.convertTo(inFrame,CV_32FC3);
+  vector<vector <model> > gaussMod(inFrame.rows,vector <model>  (inFrame.cols));
+  vector<vector <model> > gaussSecMod(inFrame.rows,vector <model>  (inFrame.cols));
+    for(int y=0;y<inFrame.rows;y++){
+ 	 float *ptr=inFrame.ptr<float>(y); //pointer to the y-th image row
+  	for(int x=0;x<inFrame.cols;x++,ptr+=3){
+   	 gaussMod[y][x].mean=calcMean(ptr[0],ptr[1],ptr[2]);
+         gaussMod[y][x].stdDev=standardDev(ptr[0],ptr[1],ptr[2]);
+  	 }
+ 	}
   
   double fps=25.0;
   if (!cameraInput)
     fps=input.get(CV_CAP_PROP_FPS);
   
-  bool wasOk2 = inputFrame2.read(fram2);
+ 
 
-
-  outFrame = Mat::zeros(inFrame.size(), CV_8UC1);
+  outFrame = Mat::zeros(inFrame.size(), CV_32FC3);
   
   VideoWriter output;
   cv::Size S = cv::Size(inFrame.cols,inFrame.rows);    //Acquire input size
@@ -113,6 +148,8 @@ int main (int argc, char * const argv[])
     cerr << "Error: the ouput stream is not opened.\n";
   }  
 
+  if(isInteger(filein)) webcam=true;
+
   int frameNumber=0;
   int key = 0;
 
@@ -120,54 +157,51 @@ int main (int argc, char * const argv[])
   
   while(wasOk && key!=27 )
   {
-     wasOk2 = inputFrame2.read(fram2);
-     if(wasOk2){
-       frameNumber++;
-        
-       cv::imshow ("Input", inFrame);    
+     outFrame =outFrame*0;
+      if(webcam) setWebcamParams(inputFrame2,input);
+      inFrame.convertTo(inFrame,CV_32FC3);
+      frameNumber++;
+      if(frameNumber<bVal){
+
+       for(int y=0;y<inFrame.rows;y++){
+
+ 	 float *ptr=inFrame.ptr<float>(y); //pointer to the y-th image row
+
+  	for(int x=0;x<inFrame.cols;x++,ptr+=3){
+   	 gaussSecMod[y][x].mean=calcMean(ptr[0],ptr[1],ptr[2]);
+         gaussSecMod[y][x].stdDev=standardDev(ptr[0],ptr[1],ptr[2]);
+      
+         gaussMod[y][x].mean=(alpha*gaussMod[y][x].mean)+((1-alpha)*gaussSecMod[y][x].mean);
+         gaussMod[y][x].stdDev=(alpha*gaussMod[y][x].stdDev)+((1-alpha)*gaussSecMod[y][x].stdDev);
+  	 }
+ 	}
+       outFrame=inFrame.clone();
+      }
+      else{
+        /*cv::namedWindow("WebcamValues",0);
+        cv::createTrackbar("Time","WebcamValues",&time,255);*/
+       
+     /* assert(inFrame.rows==outFrame.rows);
+        assert(outFrame.cols==inFrame.cols);*/
      
-	 // Do your processing
-       Mat auxImage,auxImage2;
+       for(int y=0;y<inFrame.rows;y++){
+ 	 float *ptr=inFrame.ptr<float>(y); //pointer to the y-th image row
+         float *ptr2=outFrame.ptr<float>(y); 
+  	 for(int x=0;x<inFrame.cols&&x<outFrame.cols;x++,ptr+=3,ptr2+=3){
+   	  if((abs(gaussMod[y][x].mean-ptr[0])>(typical*gaussMod[y][x].stdDev))&&(abs(gaussMod[y][x].mean-ptr[1])>(typical*gaussMod[y][x].stdDev))&&(abs(gaussMod[y][x].mean-ptr[2])>(typical*gaussMod[y][x].stdDev))){
+           ptr2[0]=ptr[0]; ptr2[1]=ptr[1]; ptr2[2]=ptr[2]; 
+          }
+          else ptr2[0]=ptr2[1]=ptr2[2]=0;
+  	 }
+ 	}
 
-       cvtColor(inFrame, auxImage, CV_RGB2GRAY);
-       cvtColor(fram2, auxImage2, CV_RGB2GRAY);
-
-       absdiff(auxImage,auxImage2,outFrame);
-
+       }
+      cout<<frameNumber<<"xd"<<endl;
+      inFrame.convertTo(inFrame,CV_8UC3);
+      cv::imshow ("Input", inFrame);    
      
-
- 
-    
-     cv::namedWindow("Values",0);
-     cv::createTrackbar("r value","Values",&thresh,255);
-     threshold(outFrame,outFrame,thresh,255,THRESH_BINARY);
-
-     Mat opening;
-     Mat close;
-
-     if(r>0){
-     	Mat kern=getStructuringElement(MORPH_RECT, Size(r*2+1,r*2+1),Point( r, r ));
-     
-        	//Doing the opening process
-     	erode(outFrame,opening,kern); 
-     	dilate(outFrame,opening,kern);
-
-        	//Doing the closing process
-     	dilate(outFrame,close,kern); 
-     	erode(close,close,kern); 
-    
-     	outFrame=opening+close;
-           }
-    
-
-     Mat rgbOut;
-     outFrame.convertTo(outFrame,inFrame.type());
-
-       cvtColor(outFrame, outFrame, CV_GRAY2RGB);
- output<<outFrame;
-     bitwise_and(inFrame, outFrame, rgbOut);
+     outFrame.convertTo(outFrame,CV_8UC3);
      imshow ("Output", outFrame);
-     imshow ("Substracted",rgbOut);
      wasOk=input.read(inFrame);
 
      key = cv::waitKey(20);
@@ -175,12 +209,61 @@ int main (int argc, char * const argv[])
          string aux=filein;
          string outImgFile=aux.substr(0,aux.size()-4)+to_string(frameNumber)+".jpg";
          cv::imwrite(outImgFile,outFrame);}
-      } 
+  
    
-   else wasOk=false;
+
   }           
   return 0;
 }
 
+bool isInteger(const std::string & s)
+{
+   if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false ;
 
+   char * p ;
+   strtol(s.c_str(), &p, 10) ;
+
+   return (*p == 0) ;
+}
+
+double standardDev(double a, double b, double c){
+    double mean = calcMean(a,b,c);
+ 
+        double temp = 0;
+
+
+             temp += pow((a - mean),2) ;
+             temp += pow((b - mean),2) ;
+             temp += pow((c - mean),2) ;
+
+        return sqrt(temp / 3);
+
+
+
+}
+
+double calcMean(double a, double b, double c){
+   double sum = 0; 
+   sum=a+b+c;
+   return sum/3;
+}
+
+void setWebcamParams(VideoCapture &inputFrame2,VideoCapture &input){
+   int time,gain,brightness;
+   time=inputFrame2.get(CAP_PROP_FPS);
+   gain=inputFrame2.get(CAP_PROP_GAIN);
+   brightness=inputFrame2.get(CAP_PROP_BRIGHTNESS);
+    cv::namedWindow("WebcamValues",0);
+     cv::createTrackbar("Time","WebcamValues",&time,255);
+     cv::createTrackbar("Gain","WebcamValues",&gain,255);
+     cv::createTrackbar("Brighness","WebcamValues",&brightness,255);
+     inputFrame2.set(CAP_PROP_FPS,time);
+     inputFrame2.set(CAP_PROP_GAIN,gain);
+     inputFrame2.set(CAP_PROP_BRIGHTNESS,brightness);
+     input.set(CAP_PROP_FPS,time);
+     input.set(CAP_PROP_GAIN,gain);
+     input.set(CAP_PROP_BRIGHTNESS,brightness); 
+
+
+}
 
