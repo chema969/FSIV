@@ -180,27 +180,42 @@ int main (int argc, char * const argv[])
       else{
         /*cv::namedWindow("WebcamValues",0);
         cv::createTrackbar("Time","WebcamValues",&time,255);*/
-       
-     /* assert(inFrame.rows==outFrame.rows);
-        assert(outFrame.cols==inFrame.cols);*/
+      if(frameNumber%cVal==0){
+
+       for(int y=0;y<inFrame.rows;y++){
+ 	 float *ptr=inFrame.ptr<float>(y); //pointer to the y-th image row
+  	 for(int x=0;x<inFrame.cols&&x<outFrame.cols;x++,ptr+=3){
+   	  if((abs(gaussMod[y][x].mean-ptr[0])>(typical*gaussMod[y][x].stdDev))&&(abs(gaussMod[y][x].mean-ptr[1])>(typical*gaussMod[y][x].stdDev))&&(abs(gaussMod[y][x].mean-ptr[2])>(typical*gaussMod[y][x].stdDev))){
+         gaussSecMod[y][x].mean=calcMean(ptr[0],ptr[1],ptr[2]);
+         gaussSecMod[y][x].stdDev=standardDev(ptr[0],ptr[1],ptr[2]);
+      
+         gaussMod[y][x].mean=(alpha*gaussMod[y][x].mean)+((1-alpha)*gaussSecMod[y][x].mean);
+         gaussMod[y][x].stdDev=(alpha*gaussMod[y][x].stdDev)+((1-alpha)*gaussSecMod[y][x].stdDev);
+          }
+         
+  	 }
+ 	}
+
+       }
      
        for(int y=0;y<inFrame.rows;y++){
  	 float *ptr=inFrame.ptr<float>(y); //pointer to the y-th image row
          float *ptr2=outFrame.ptr<float>(y); 
   	 for(int x=0;x<inFrame.cols&&x<outFrame.cols;x++,ptr+=3,ptr2+=3){
-   	  if((abs(gaussMod[y][x].mean-ptr[0])>(typical*gaussMod[y][x].stdDev))&&(abs(gaussMod[y][x].mean-ptr[1])>(typical*gaussMod[y][x].stdDev))&&(abs(gaussMod[y][x].mean-ptr[2])>(typical*gaussMod[y][x].stdDev))){
-           ptr2[0]=ptr[0]; ptr2[1]=ptr[1]; ptr2[2]=ptr[2]; 
-          }
+   	  if((abs(gaussMod[y][x].mean-ptr[0])>(typical*gaussMod[y][x].stdDev))&&(abs(gaussMod[y][x].mean-ptr[1])>(typical*gaussMod[y][x].stdDev))&&(abs(gaussMod[y][x].mean-ptr[2])>(typical*gaussMod[y][x].stdDev)))
+           ptr2[0]=ptr2[1]=ptr2[2]=255; 
+         
           else ptr2[0]=ptr2[1]=ptr2[2]=0;
   	 }
  	}
 
        }
-      cout<<frameNumber<<"xd"<<endl;
-      inFrame.convertTo(inFrame,CV_8UC3);
-      cv::imshow ("Input", inFrame);    
-     
-     outFrame.convertTo(outFrame,CV_8UC3);
+      inFrame=inFrame/255;
+
+     cv::imshow ("Input", inFrame);    
+          bitwise_and(inFrame, outFrame, outFrame);
+     outFrame=outFrame/255;
+
      imshow ("Output", outFrame);
      wasOk=input.read(inFrame);
 
