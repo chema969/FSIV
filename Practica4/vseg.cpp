@@ -37,6 +37,7 @@ int main (int argc, char * const argv[])
   const char * filein = 0;
   const char * fileout = 0;
   char opt;
+  bool wasOk2;
   bool webcam=false;
   int optind = 1;
 
@@ -69,6 +70,8 @@ int main (int argc, char * const argv[])
   std::cout << "Input stream:" << filein << endl;
   std::cout << "Output:" << fileout << endl;
 
+  if(isInteger(filein)) webcam=true;
+
   VideoCapture input;
   VideoCapture inputFrame2; 
 
@@ -76,11 +79,13 @@ int main (int argc, char * const argv[])
     input.open(atoi(filein));
   else  
     input.open(filein);
-  
-  if (cameraInput)
-    inputFrame2.open(atoi(filein));
-  else  
-    inputFrame2.open(filein);
+
+  if(!webcam){
+    if (cameraInput)
+      inputFrame2.open(atoi(filein));
+    else  
+      inputFrame2.open(filein);
+  }
 
   if (!input.isOpened())
   {
@@ -101,7 +106,7 @@ int main (int argc, char * const argv[])
   if (!cameraInput)
     fps=input.get(CV_CAP_PROP_FPS);
   
-  bool wasOk2 = inputFrame2.read(fram2);
+  if(!webcam)  wasOk2 = inputFrame2.read(fram2);
 
 
   outFrame = Mat::zeros(inFrame.size(), CV_8UC1);
@@ -115,8 +120,8 @@ int main (int argc, char * const argv[])
     cerr << "Error: the ouput stream is not opened.\n";
   }  
 
-  if(isInteger(filein)) webcam=true;
-
+  
+  Mat camaux;
   int frameNumber=0;
   int key = 0;
 
@@ -127,7 +132,7 @@ int main (int argc, char * const argv[])
     
     if(webcam) setWebcamParams(inputFrame2,input);
 
-     wasOk2 = inputFrame2.read(fram2);
+    if(!webcam) wasOk2 = inputFrame2.read(fram2);
      if(wasOk2){
        frameNumber++;
         
@@ -157,7 +162,7 @@ int main (int argc, char * const argv[])
      
         	//Doing the opening process
      	erode(outFrame,opening,kern); 
-     	dilate(outFrame,opening,kern);
+     	dilate(opening,opening,kern);
 
         	//Doing the closing process
      	dilate(outFrame,close,kern); 
@@ -170,11 +175,12 @@ int main (int argc, char * const argv[])
      Mat rgbOut;
      outFrame.convertTo(outFrame,inFrame.type());
 
-       cvtColor(outFrame, outFrame, CV_GRAY2RGB);
- output<<outFrame;
+     cvtColor(outFrame, outFrame, CV_GRAY2RGB);
+     output<<outFrame;
      bitwise_and(inFrame, outFrame, rgbOut);
      imshow ("Output", outFrame);
      imshow ("Substracted",rgbOut);
+     if(webcam) fram2=inFrame.clone();
      wasOk=input.read(inFrame);
 
      key = cv::waitKey(20);

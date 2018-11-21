@@ -120,17 +120,10 @@ int main (int argc, char * const argv[])
     cerr << "Error: could not read any image from stream.\n";
     abort();
   }
-      inFrame.convertTo(inFrame,CV_32FC3);
+
   vector<vector <model> > gaussMod(inFrame.rows,vector <model>  (inFrame.cols));
   vector<vector <model> > gaussSecMod(inFrame.rows,vector <model>  (inFrame.cols));
-    for(int y=0;y<inFrame.rows;y++){
- 	 float *ptr=inFrame.ptr<float>(y); //pointer to the y-th image row
-  	for(int x=0;x<inFrame.cols;x++,ptr+=3){
-   	 gaussMod[y][x].mean=calcMean(ptr[0],ptr[1],ptr[2]);
-         gaussMod[y][x].stdDev=standardDev(ptr[0],ptr[1],ptr[2]);
-  	 }
- 	}
-  
+
   double fps=25.0;
   if (!cameraInput)
     fps=input.get(CV_CAP_PROP_FPS);
@@ -152,73 +145,70 @@ int main (int argc, char * const argv[])
 
   int frameNumber=0;
   int key = 0;
-
+  int r = 1;
+  Mat dev=Mat::zeros(inFrame.size(), CV_32FC3);
+  Mat med=Mat::zeros(inFrame.size(), CV_32FC3);
+  Mat mask=Mat::zeros(inFrame.size(), CV_32FC3);
   cv::namedWindow("Output");
-  
+          int fakeTyp=typical*10;
   while(wasOk && key!=27 )
   {
-     outFrame =outFrame*0;
+      Mat truemask;
+      inFrame.convertTo(inFrame,CV_32FC3);   
       if(webcam) setWebcamParams(inputFrame2,input);
-      inFrame.convertTo(inFrame,CV_32FC3);
       frameNumber++;
       if(frameNumber<bVal){
+         accumulateWeighted(inFrame,med,alpha);  
+        // med=med/2;
+         Mat puwu, subs;
+         subtract(inFrame,med,subs);
+         pow(subs,2,puwu);
+         accumulateWeighted(puwu,dev,alpha);
 
-       for(int y=0;y<inFrame.rows;y++){
-
- 	 float *ptr=inFrame.ptr<float>(y); //pointer to the y-th image row
-
-  	for(int x=0;x<inFrame.cols;x++,ptr+=3){
-   	 gaussSecMod[y][x].mean=calcMean(ptr[0],ptr[1],ptr[2]);
-         gaussSecMod[y][x].stdDev=standardDev(ptr[0],ptr[1],ptr[2]);
-      
-         gaussMod[y][x].mean=(alpha*gaussMod[y][x].mean)+((1-alpha)*gaussSecMod[y][x].mean);
-         gaussMod[y][x].stdDev=(alpha*gaussMod[y][x].stdDev)+((1-alpha)*gaussSecMod[y][x].stdDev);
-  	 }
- 	}
-       outFrame=inFrame.clone();
+     
       }
       else{
-        /*cv::namedWindow("WebcamValues",0);
-        cv::createTrackbar("Time","WebcamValues",&time,255);*/
-      if(frameNumber%cVal==0){
+        cv::namedWindow("Typical",0);
 
-       for(int y=0;y<inFrame.rows;y++){
- 	 float *ptr=inFrame.ptr<float>(y); //pointer to the y-th image row
-  	 for(int x=0;x<inFrame.cols&&x<outFrame.cols;x++,ptr+=3){
-   	  if((abs(gaussMod[y][x].mean-ptr[0])>(typical*gaussMod[y][x].stdDev))&&(abs(gaussMod[y][x].mean-ptr[1])>(typical*gaussMod[y][x].stdDev))&&(abs(gaussMod[y][x].mean-ptr[2])>(typical*gaussMod[y][x].stdDev))){
-         gaussSecMod[y][x].mean=calcMean(ptr[0],ptr[1],ptr[2]);
-         gaussSecMod[y][x].stdDev=standardDev(ptr[0],ptr[1],ptr[2]);
-      
-         gaussMod[y][x].mean=(alpha*gaussMod[y][x].mean)+((1-alpha)*gaussSecMod[y][x].mean);
-         gaussMod[y][x].stdDev=(alpha*gaussMod[y][x].stdDev)+((1-alpha)*gaussSecMod[y][x].stdDev);
-          }
-         
-  	 }
- 	}
+        cv::createTrackbar("TypicalVal","Typical",&fakeTyp,70);
+        typical=fakeTyp/10;
+        Mat abdi,mult,s[3];
+        absdiff(med,inFrame,abdi);
+        multiply(dev,typical,mult);
+        compare(abdi,mult,mask,CMP_GT);
+        split(mask,s);//split source  
+        bitwise_and(s[0],s[1], truemask);
+        bitwise_and(truemask,s[2], truemask);
+        Mat opening;
+        Mat close;
 
+    
+    
+        imshow ("Mask", truemask);
+        if(cVal%frameNumber==0){ 
+             accumulateWeighted(inFrame,med,alpha,truemask);  
+             //med=med/2;
+             Mat puwu, subs;
+             subtract(inFrame,med,subs);
+             pow(subs,2,puwu);
+             accumulateWeighted(puwu,dev,alpha,truemask);
+         }
+             assert(inFrame.cols==truemask.cols);
+             assert(inFrame.rows==truemask.rows);
+            
+             inFrame.copyTo(outFrame,truemask);
        }
-     
-       for(int y=0;y<inFrame.rows;y++){
- 	 float *ptr=inFrame.ptr<float>(y); //pointer to the y-th image row
-         float *ptr2=outFrame.ptr<float>(y); 
-  	 for(int x=0;x<inFrame.cols&&x<outFrame.cols;x++,ptr+=3,ptr2+=3){
-   	  if((abs(gaussMod[y][x].mean-ptr[0])>(typical*gaussMod[y][x].stdDev))&&(abs(gaussMod[y][x].mean-ptr[1])>(typical*gaussMod[y][x].stdDev))&&(abs(gaussMod[y][x].mean-ptr[2])>(typical*gaussMod[y][x].stdDev)))
-           ptr2[0]=ptr2[1]=ptr2[2]=255; 
-         
-          else ptr2[0]=ptr2[1]=ptr2[2]=0;
-  	 }
- 	}
+       
 
-       }
-      inFrame=inFrame/255;
-
+     inFrame=inFrame/255;
      cv::imshow ("Input", inFrame);    
-          bitwise_and(inFrame, outFrame, outFrame);
+     
      outFrame=outFrame/255;
-
      imshow ("Output", outFrame);
      wasOk=input.read(inFrame);
+    Mat aux;
 
+    output<<outFrame;
      key = cv::waitKey(20);
      if(key==32){std::cout<<"SAVING IMAGE"<<std::endl;
          string aux=filein;
