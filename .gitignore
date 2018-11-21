@@ -1,2 +1,5 @@
 */build
 *.tar.gz
+build
+data
+tclap-1.2.1
