@@ -37,6 +37,8 @@ main(int argc, char * argv[])
 	cmd.add(ntrain);
 	TCLAP::ValueArg<int> ntest("", "ntest", "Number of samples per class used to test. Default 50.", false, 50, "int");
 	cmd.add(ntest);
+	TCLAP::ValueArg<int> nneigh("", "neighbours", "Number of neighbours used for the Knn. Default 1.", false, 1, "int");
+	cmd.add(nneigh);
 	cmd.parse(argc, argv);
 
 	std::vector<std::string> categories;
@@ -182,7 +184,7 @@ main(int argc, char * argv[])
             //Train a KNN classifier using the training bovws like patterns.
             cv::Ptr<cv::ml::KNearest> knnClassifier = cv::ml::KNearest::create();
             knnClassifier->setAlgorithmType(cv::ml::KNearest::BRUTE_FORCE);            
-            knnClassifier->setDefaultK(1);
+            knnClassifier->setDefaultK(nneigh.getValue());
             knnClassifier->setIsClassifier(true);
             classifier = knnClassifier;
 
