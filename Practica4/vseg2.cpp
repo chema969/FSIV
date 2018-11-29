@@ -179,8 +179,7 @@ int main (int argc, char * const argv[])
         split(mask,s);//split source  
         bitwise_and(s[0],s[1], truemask);
         bitwise_and(truemask,s[2], truemask);
-        Mat opening;
-        Mat close;
+
 
     
     

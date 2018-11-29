@@ -16,13 +16,19 @@ int main(int argc,char* argv){
 	cmd.add(imgArg);
 	TCLAP::ValueArg<std::string> configFile("", "config_file", "configuration file for the dataset.", false, "101_ObjectCategories_conf.txt", "pathname");
 	cmd.add(configFile);
-        TCLAP::ValueArg<std::string> n_runsArg("", "dict", "Dictionary of the boVw.", false, "../dictionary.yml", "pathname");
+        TCLAP::ValueArg<std::string> dictionary("", "dict", "Dictionary of the boVw.", false, "../dictionary.yml", "pathname");
         cmd.add(n_runsArg);
-	TCLAP::ValueArg<int> ntest("", "classifier", "Classifier YML file.", false, "../classifier.yml", "pathname");
+	TCLAP::ValueArg<std::string> ntest("", "classifier", "Classifier YML file.", false, "../classifier.yml", "pathname");
 	cmd.add(ntest);
 
 	cmd.parse(argc, argv);
-         
+       
+        cv::FileStorage dictFile;
+        dictFile.open(dictionary.getValue(), cv::FileStorage::READ);
+    int keywords;
+    dictFile["keywords"]>>keywords;
+    cv::Ptr<cv::ml::KNearest> dict = cv::Algorithm::read<cv::ml::KNearest>(dictFile.root());
+    dictFile.release();
 
 
 

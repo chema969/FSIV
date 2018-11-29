@@ -8,5 +8,7 @@ LINK_LIBRARIES(${OpenCV_LIBS} )
 add_executable(prg1 prg1.cpp)
 add_executable(prg2 prg2.cpp)
 add_executable(prg3 prg3.cpp)
-
+add_executable(key key.cpp)
+add_executable(kmeans kmeans_sample.cpp)
+add_executable(introduction_to_svm introduction_to_svm.cpp)
  
