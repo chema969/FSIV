@@ -40,7 +40,7 @@ int main(int argc,char** argv){
     classFile.release();
 
    classif->setDefaultK(default_k);
-   cv::Mat img=cv::imread(imgArg.getValue(), IMREAD_GRAYSCALE);
+   cv::Mat img=cv::imread(imgArg.getValue(), cv::IMREAD_GRAYSCALE);
 
 
    resize(img, img, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols)));                    
@@ -65,7 +65,7 @@ int main(int argc,char** argv){
    std::vector<std::string> categories;
    std::vector<int> samples_per_cat;
    int retCode;
-   if ((retCode = load_dataset_information(dataset_desc_file, categories, samples_per_cat)) != 0)
+   if ((retCode = load_dataset_information(configFile.getValue(), categories, samples_per_cat)) != 0)
 	{
 		std::cerr << "Error: could not load dataset information from '"
 			<< dataset_desc_file
