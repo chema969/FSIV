@@ -36,10 +36,10 @@ int main(int argc,char** argv){
     classFile["default_k"]>>default_k;
     cv::Ptr<cv::ml::KNearest> dict = cv::Algorithm::read<cv::ml::KNearest>(dictFile.root());
     dictFile.release();
-    cv::Ptr<cv::ml::KNearest> classif = cv::Algorithm::read<cv::ml::KNearest>(classFile.root());
+    cv::Ptr<cv::ml::KNearest> classif = cv::Algorithm::load<cv::ml::KNearest>(classifier.getValue());
     classFile.release();
 
-   classif->setDefaultK(default_k);
+   classif->setDefaultK(1);
    cv::Mat img=cv::imread(imgArg.getValue(), cv::IMREAD_GRAYSCALE);
 
 
@@ -65,12 +65,13 @@ int main(int argc,char** argv){
    std::vector<std::string> categories;
    std::vector<int> samples_per_cat;
    int retCode;
-   if ((retCode = load_dataset_information(configFile.getValue(), categories, samples_per_cat)) != 0)
+  /* if ((retCode = load_dataset_information(configFile.getValue(), 
+categories, samples_per_cat)) != 0)
 	{
 		std::cerr << "Error: could not load dataset information from '"
-			<< dataset_desc_file
+			<< configFile.getValue()
 			<< "' (" << retCode << ")." << std::endl;
 		exit(-1);
-	}
-   std::cout<<"Image belongs to category "<<prediction.at<float>(0,0)<<" "<<categories[prediction.at<float>(0,0)]<<std::endl;
+	}*/
+   std::cout<<"Image belongs to category "<<prediction.at<float>(0,0);//<<" "<<categories[prediction.at<float>(0,0)]<<std::endl;
 }
