@@ -1,15 +1,16 @@
-#include <iomanip>
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include <string>
-#include "common_code.hpp"
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/features2d.hpp>
-#include <opencv2/xfeatures2d.hpp>
+#include <vector>
 #include <tclap/CmdLine.h>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/ml/ml.hpp>
+#include "common_code.hpp"
 
-int main(int argc,char* argv){
+
+int main(int argc,char** argv){
    TCLAP::CmdLine cmd("Testing the results with a given image", ' ', "0.0");
 
 	TCLAP::ValueArg<std::string> imgArg("", "img", "input image.", true, "", "pathname");
@@ -63,7 +64,7 @@ int main(int argc,char* argv){
    
    std::vector<std::string> categories;
    std::vector<int> samples_per_cat;
-   
+   int retCode;
    if ((retCode = load_dataset_information(dataset_desc_file, categories, samples_per_cat)) != 0)
 	{
 		std::cerr << "Error: could not load dataset information from '"
@@ -71,5 +72,5 @@ int main(int argc,char* argv){
 			<< "' (" << retCode << ")." << std::endl;
 		exit(-1);
 	}
-   std::cout<<"Image belongs to category "<<prediction.at<float>(0,0)<<" "<<categories[prediction.at<float>(0,0)]<<std::endl
+   std::cout<<"Image belongs to category "<<prediction.at<float>(0,0)<<" "<<categories[prediction.at<float>(0,0)]<<std::endl;
 }
