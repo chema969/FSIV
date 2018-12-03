@@ -17,11 +17,11 @@ int main(int argc,char* argv){
 	TCLAP::ValueArg<std::string> configFile("", "config_file", "configuration file for the dataset.", false, "101_ObjectCategories_conf.txt", "pathname");
 	cmd.add(configFile);
         TCLAP::ValueArg<std::string> dictionary("", "dict", "Dictionary of the boVw.", false, "../dictionary.yml", "pathname");
-        cmd.add(n_runsArg);
+        cmd.add(dictionary);
 	TCLAP::ValueArg<std::string> classifier("", "classifier", "Classifier YML file.", false, "../classifier.yml", "pathname");
-	cmd.add(ntest);
+	cmd.add(classifier);
        TCLAP::ValueArg<std::string> descriptor("", "descriptor", "Descriptor used for test. Default SIFT.", false, "SIFT", "string");
-	cmd.add(nneigh);
+	cmd.add(descriptor);
 	cmd.parse(argc, argv);
        
 
@@ -39,7 +39,7 @@ int main(int argc,char* argv){
     classFile.release();
 
    classif->setDefaultK(default_k);
-   cv::Mat img=cv::imread(imgArg.getValue(), cv::IMREAD_GRAYSCALE);
+   cv::Mat img=cv::imread(imgArg.getValue(), IMREAD_GRAYSCALE);
 
 
    resize(img, img, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols)));                    
@@ -50,7 +50,7 @@ int main(int argc,char* argv){
 
    else{
       if(descriptor.getValue()=="SURF")
-       descs = extractSURFdescriptors(img, surf_threshold.getValue());
+       descs = extractSURFdescriptors(img, 190);
       
       else{
         if(descriptor.getValue()=="DSIFT") std::cout<<" "<<std::endl;

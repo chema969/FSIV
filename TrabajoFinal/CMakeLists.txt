@@ -10,4 +10,4 @@ LINK_LIBRARIES(${OpenCV_LIBS})
 
 # For students
 add_executable(train_bovw train_bovw.cpp common_code.cpp common_code.hpp)
-#add_executable(test_bovw test_bovw.cpp common_code.cpp common_code.hpp)
+add_executable(test_bovw test_bovw.cpp common_code.cpp common_code.hpp)
