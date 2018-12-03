@@ -9,7 +9,7 @@
 #include <string>
 #include <opencv2/core.hpp>
 #include <opencv2/ml.hpp>
-
+#define IMG_WIDTH 300
 void basename(const std::string& path,
                      std::string& dirname,
                      std::string& filename,
@@ -73,5 +73,9 @@ cv::Mat extractSIFTDescriptors(const cv::Mat& img, const int ndesc);
  * @return the BoVW descriptor
  */
 cv::Mat compute_bovw (const cv::Ptr<cv::ml::KNearest>& dict, const int dict_size, cv::Mat& img_descs, bool normalize=true);
+
+
+cv::Mat extractSURFdescriptors(const cv::Mat& img, const int ndesc);
+
 
 #endif //__COMMON_CODE_HPP__

@@ -14,7 +14,6 @@
 #include <opencv2/ml/ml.hpp>
 #include "common_code.hpp"
 
-#define IMG_WIDTH 300
 
 int
 main(int argc, char * argv[])
@@ -39,6 +38,10 @@ main(int argc, char * argv[])
 	cmd.add(ntest);
 	TCLAP::ValueArg<int> nneigh("", "neighbours", "Number of neighbours used for the Knn. Default 1.", false, 1, "int");
 	cmd.add(nneigh);
+        TCLAP::ValueArg<std::string> descriptor("", "descriptor", "Descriptor used for train. Default SIFT.", false, "SIFT", "string");
+	cmd.add(descriptor);
+	TCLAP::ValueArg<int> surf_threshold("", "threshold", "Threshold for surf. Default 400.", false, 400, "int");
+	cmd.add(surf_threshold);
 	cmd.parse(argc, argv);
 
 	std::vector<std::string> categories;
@@ -46,6 +49,7 @@ main(int argc, char * argv[])
 	
 	std::string dataset_desc_file = basenameArg.getValue() + "/" + configFile.getValue();
 	
+        /*Reading the config file*/
 	int retCode;
 	if ((retCode = load_dataset_information(dataset_desc_file, categories, samples_per_cat)) != 0)
 	{
@@ -111,7 +115,14 @@ main(int argc, char * argv[])
                     resize(img, img, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols)));                    
                     
                     cv::Mat descs;
-                    descs = extractSIFTDescriptors(img, ndesc.getValue());
+                    if(descriptor.getValue()=="SIFT")
+                       descs = extractSIFTDescriptors(img, ndesc.getValue());
+
+                    else{
+                       if(descriptor.getValue()=="SURF")
+                       descs = extractSURFdescriptors(img, surf_threshold.getValue());
+                       }
+
 
                     if (train_descs.empty())
                         train_descs = descs;
@@ -222,7 +233,18 @@ main(int argc, char * argv[])
                     //cv::Mat descs = extractSIFTDescriptors(img, ndesc.getValue());
                     cv::Mat descs;
 
-                    descs = extractSIFTDescriptors(img, ndesc.getValue());
+                     if(descriptor.getValue()=="SIFT")
+      			descs = extractSIFTDescriptors(img,  ndesc.getValue());
+
+  		     else{
+    			  if(descriptor.getValue()=="SURF")
+       			   descs = extractSURFdescriptors(img, surf_threshold.getValue());
+      
+      		       else{
+        		  if(descriptor.getValue()=="DSIFT") std::cout<<" "<<std::endl;
+       			  else{std::cout<<"NO EXISTE DESCRIPTOR"<<std::endl;return -1;}
+      			 }
+    			}
 
 
                     cv::Mat bovw = compute_bovw(dict, keyws.rows, descs);
@@ -272,6 +294,7 @@ main(int argc, char * argv[])
     cv::FileStorage dictFile;
     dictFile.open("dictionary.yml", cv::FileStorage::WRITE);
     dictFile << "keywords" << keywords.getValue();
+   // dictFile << "configFile" <<dataset_desc_file;
     best_dictionary->write(dictFile);
     dictFile.release();
     best_classifier->save("classifier.yml");

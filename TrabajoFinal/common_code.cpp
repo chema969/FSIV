@@ -199,3 +199,12 @@ compute_bovw (const cv::Ptr<cv::ml::KNearest>& dict, const int dict_size, cv::Ma
     return bovw;
 }
 
+
+cv::Mat extractSURFdescriptors(const cv::Mat& img, const int thresh)
+{
+    cv::Ptr<cv::xfeatures2d::SURF> surf = cv::xfeatures2d::SURF::create(thresh,4,3,true);
+    std::vector<cv::KeyPoint> kps;
+    cv::Mat descs;
+    surf->detectAndCompute(img, cv::noArray(), kps, descs);
+    return descs;
+}
