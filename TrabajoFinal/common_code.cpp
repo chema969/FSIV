@@ -221,7 +221,26 @@ for (int i=step; i<img.rows-step; i+=step)
         kps.push_back(cv::KeyPoint(float(j), float(i), float(step)));
     }
 }
+if(step/2!=0){
+	for (int i=step/2; i<img.rows-step; i+=step/2)
+	{
+    	 for (int j=step/2; j<img.cols-step; j+=step/2)
+    	   {
 
+           kps.push_back(cv::KeyPoint(float(j), float(i), float(step)));
+        }
+   }
+}
+if(step/4!=0){
+	for (int i=step/4; i<img.rows-step; i+=step/4)
+	{	
+    	  for (int j=step/4; j<img.cols-step; j+=step/4)
+    	{
+
+        kps.push_back(cv::KeyPoint(float(j), float(i), float(step)));
+    	}
+ }
+}
 cv::Mat descs;
 cv::Ptr<cv::xfeatures2d::SIFT> sift = cv::xfeatures2d::SIFT::create(ndesc);
 sift->compute(img,kps,descs);

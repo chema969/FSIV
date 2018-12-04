@@ -27,8 +27,8 @@ int main(int argc,char** argv){
 	cmd.add(surf_threshold);
 	TCLAP::ValueArg<int> nneigh("", "neighbours", "Number of neighbours used for the Knn. Default 1.", false, 1, "int");
 	cmd.add(nneigh);
-        TCLAP::ValueArg<int> step("", "step", "Number of neighbours used for the Knn. Default 10.", false, 10, "int");
-	cmd.add(step);
+	TCLAP::ValueArg<int> steps("", "scale", "In dense SIFT, the distance from you take the keypoints. Default 10.", false, 10, "int");
+	cmd.add(steps);
 	cmd.parse(argc, argv);
        
 
@@ -52,18 +52,20 @@ int main(int argc,char** argv){
    resize(img, img, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols)));                    
                     
    cv::Mat descs;
-   if(descriptor.getValue()=="SIFT")
-      descs = extractSIFTDescriptors(img,ndesc.getValue());
+           if(descriptor.getValue()=="SIFT")
+      		descs = extractSIFTDescriptors(img,  ndesc.getValue());
 
-   else{
-      if(descriptor.getValue()=="SURF")
-       descs = extractSURFdescriptors(img, surf_threshold.getValue());
+  	   else{
+    	          if(descriptor.getValue()=="SURF")
+       	 		descs = extractSURFdescriptors(img, surf_threshold.getValue());
       
-      else{
-        if(descriptor.getValue()=="DSIFT") descs=extractDSIFTdescriptors(img, ndesc.getValue(), step.getValue());
-        else{std::cout<<"NO EXISTE DESCRIPTOR"<<std::endl;return -1;}
-       }
-    }
+      		  else{
+        	   if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue());
+       	           else{std::cout<<"NO EXISTE DESCRIPTOR"<<std::endl;return -1;}
+                  }
+    	}
+
+
    cv::Mat prediction;
    cv::Mat bovw=compute_bovw(dict,keywords,descs);
    classif->predict(bovw,prediction);
