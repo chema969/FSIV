@@ -8,8 +8,6 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/ml/ml.hpp>
 #include "common_code.hpp"
-
-
 int main(int argc,char** argv){
    TCLAP::CmdLine cmd("Testing the results with a given image", ' ', "0.0");
 
@@ -23,6 +21,14 @@ int main(int argc,char** argv){
 	cmd.add(classifier);
        TCLAP::ValueArg<std::string> descriptor("", "descriptor", "Descriptor used for test. Default SIFT.", false, "SIFT", "string");
 	cmd.add(descriptor);
+        TCLAP::ValueArg<int> ndesc("", "ndesc", "[SIFT] Number of descriptors per image. Value 0 means extract all. Default 0.", false, 0, "int");
+	cmd.add(ndesc);
+	TCLAP::ValueArg<int> surf_threshold("", "threshold", "Threshold for surf. Default 400.", false, 400, "int");
+	cmd.add(surf_threshold);
+	TCLAP::ValueArg<int> nneigh("", "neighbours", "Number of neighbours used for the Knn. Default 1.", false, 1, "int");
+	cmd.add(nneigh);
+        TCLAP::ValueArg<int> step("", "step", "Number of neighbours used for the Knn. Default 10.", false, 10, "int");
+	cmd.add(step);
 	cmd.parse(argc, argv);
        
 
@@ -39,7 +45,7 @@ int main(int argc,char** argv){
     cv::Ptr<cv::ml::KNearest> classif = cv::Algorithm::load<cv::ml::KNearest>(classifier.getValue());
     classFile.release();
 
-   classif->setDefaultK(1);
+   classif->setDefaultK(nneigh.getValue());
    cv::Mat img=cv::imread(imgArg.getValue(), cv::IMREAD_GRAYSCALE);
 
 
@@ -47,14 +53,14 @@ int main(int argc,char** argv){
                     
    cv::Mat descs;
    if(descriptor.getValue()=="SIFT")
-      descs = extractSIFTDescriptors(img, keywords);
+      descs = extractSIFTDescriptors(img,ndesc.getValue());
 
    else{
       if(descriptor.getValue()=="SURF")
-       descs = extractSURFdescriptors(img, 190);
+       descs = extractSURFdescriptors(img, surf_threshold.getValue());
       
       else{
-        if(descriptor.getValue()=="DSIFT") std::cout<<" "<<std::endl;
+        if(descriptor.getValue()=="DSIFT") descs=extractDSIFTdescriptors(img, ndesc.getValue(), step.getValue());
         else{std::cout<<"NO EXISTE DESCRIPTOR"<<std::endl;return -1;}
        }
     }
@@ -65,13 +71,14 @@ int main(int argc,char** argv){
    std::vector<std::string> categories;
    std::vector<int> samples_per_cat;
    int retCode;
-  /* if ((retCode = load_dataset_information(configFile.getValue(), 
+   std::cout<<configFile.getValue()<<std::endl;
+   if ((retCode = load_dataset_information(configFile.getValue(), 
 categories, samples_per_cat)) != 0)
 	{
 		std::cerr << "Error: could not load dataset information from '"
 			<< configFile.getValue()
 			<< "' (" << retCode << ")." << std::endl;
 		exit(-1);
-	}*/
-   std::cout<<"Image belongs to category "<<prediction.at<float>(0,0);//<<" "<<categories[prediction.at<float>(0,0)]<<std::endl;
+	}
+   std::cout<<"Image belongs to category "<<prediction.at<float>(0,0)<<" "<<categories[prediction.at<float>(0,0)]<<std::endl;
 }

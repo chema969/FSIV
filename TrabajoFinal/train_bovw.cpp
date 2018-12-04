@@ -15,8 +15,7 @@
 #include "common_code.hpp"
 
 
-int
-main(int argc, char * argv[])
+int main(int argc, char * argv[])
 {
 	TCLAP::CmdLine cmd("Train and test a BoVW model", ' ', "0.0");
 
@@ -241,7 +240,7 @@ main(int argc, char * argv[])
        			   descs = extractSURFdescriptors(img, surf_threshold.getValue());
       
       		       else{
-        		  if(descriptor.getValue()=="DSIFT") std::cout<<" "<<std::endl;
+        		  if(descriptor.getValue()=="DSIFT")descs = ;
        			  else{std::cout<<"NO EXISTE DESCRIPTOR"<<std::endl;return -1;}
       			 }
     			}

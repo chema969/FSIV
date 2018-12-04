@@ -77,5 +77,6 @@ cv::Mat compute_bovw (const cv::Ptr<cv::ml::KNearest>& dict, const int dict_size
 
 cv::Mat extractSURFdescriptors(const cv::Mat& img, const int ndesc);
 
+cv::Mat extractDSIFTdescriptors(const cv::Mat& img, const int ndesc,const int step);
 
 #endif //__COMMON_CODE_HPP__

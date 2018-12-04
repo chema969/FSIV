@@ -208,3 +208,22 @@ cv::Mat extractSURFdescriptors(const cv::Mat& img, const int thresh)
     surf->detectAndCompute(img, cv::noArray(), kps, descs);
     return descs;
 }
+
+cv::Mat extractDSIFTdescriptors(const cv::Mat& img, const int ndesc,const int step)
+{
+
+std::vector<cv::KeyPoint> kps;
+for (int i=step; i<img.rows-step; i+=step)
+{
+    for (int j=step; j<img.cols-step; j+=step)
+    {
+
+        kps.push_back(cv::KeyPoint(float(j), float(i), float(step)));
+    }
+}
+
+cv::Mat descs;
+cv::Ptr<cv::xfeatures2d::SIFT> sift = cv::xfeatures2d::SIFT::create(ndesc);
+sift->compute(img,kps,descs);
+return descs;
+}
