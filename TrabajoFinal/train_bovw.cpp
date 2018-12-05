@@ -45,7 +45,8 @@ int main(int argc, char * argv[])
 	cmd.add(steps);
         TCLAP::ValueArg<int> scales("", "scales", "In dense SIFT, the number of scales you use. Default 3.", false, 3, "int");
 	cmd.add(scales);
-
+        TCLAP::ValueArg<int> PHOW_level("", "levels", "In PHOW, the levels in which you divide the image. Default 2.", false, 2, "int");
+	cmd.add(PHOW_level);
 	cmd.parse(argc, argv);
 
 	std::vector<std::string> categories;

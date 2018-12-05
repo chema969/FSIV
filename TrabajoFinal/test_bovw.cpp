@@ -31,6 +31,8 @@ int main(int argc,char** argv){
 	cmd.add(steps);
         TCLAP::ValueArg<int> scales("", "scales", "In dense SIFT, the number of scales you use. Default 3.", false, 3, "int");
 	cmd.add(scales);
+        TCLAP::ValueArg<int> PHOW_level("", "levels", "In PHOW, the levels in which you divide the image. Default 2.", false, 2, "int");
+	cmd.add(PHOW_level);
 	cmd.parse(argc, argv);
        
 
@@ -63,7 +65,7 @@ int main(int argc,char** argv){
       		  else{
         	   if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
                    else{
-       	             if(descriptor.getValue()=="PHOW")descs = extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue()); 
+       	             if(descriptor.getValue()=="PHOW")descs = extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue(),PHOW_level.getValue()); 
                      else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
                   }
     	}
