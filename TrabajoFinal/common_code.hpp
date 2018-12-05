@@ -5,7 +5,7 @@
 
 #ifndef __COMMON_CODE_HPP__
 #define __COMMON_CODE_HPP__
-
+#include <cmath>
 #include <string>
 #include <opencv2/core.hpp>
 #include <opencv2/ml.hpp>
@@ -74,9 +74,10 @@ cv::Mat extractSIFTDescriptors(const cv::Mat& img, const int ndesc);
  */
 cv::Mat compute_bovw (const cv::Ptr<cv::ml::KNearest>& dict, const int dict_size, cv::Mat& img_descs, bool normalize=true);
 
-
 cv::Mat extractSURFdescriptors(const cv::Mat& img, const int ndesc);
 
-cv::Mat extractDSIFTdescriptors(const cv::Mat& img, const int ndesc,const int step);
+cv::Mat extractDSIFTdescriptors(const cv::Mat& img, const int ndesc,const int step,const int scales);
+
+cv::Mat extractPHOWdescriptors(const cv::Mat& img, const int ndesc,const int step,const int scales,const int iterations_for_PHOW);
 
 #endif //__COMMON_CODE_HPP__

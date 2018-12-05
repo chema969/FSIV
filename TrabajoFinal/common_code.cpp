@@ -209,40 +209,48 @@ cv::Mat extractSURFdescriptors(const cv::Mat& img, const int thresh)
     return descs;
 }
 
-cv::Mat extractDSIFTdescriptors(const cv::Mat& img, const int ndesc,const int step)
+cv::Mat extractDSIFTdescriptors(const cv::Mat& img, const int ndesc,const int step,const int scales)
 {
 
 std::vector<cv::KeyPoint> kps;
-for (int i=step; i<img.rows-step; i+=step)
-{
-    for (int j=step; j<img.cols-step; j+=step)
-    {
-
-        kps.push_back(cv::KeyPoint(float(j), float(i), float(step)));
-    }
-}
-if(step/2!=0){
-	for (int i=step/2; i<img.rows-step; i+=step/2)
+int step2;
+for(int k=0;k<scales;k++){
+    step2=step/(pow(2,k));
+    if(step2!=0){
+	for (int i=step2; i<img.rows-step2; i+=step2)
 	{
-    	 for (int j=step/2; j<img.cols-step; j+=step/2)
-    	   {
+    		for (int j=step2; j<img.cols-step2; j+=step2)
+    		{
 
-           kps.push_back(cv::KeyPoint(float(j), float(i), float(step)));
-        }
-   }
-}
-if(step/4!=0){
-	for (int i=step/4; i<img.rows-step; i+=step/4)
-	{	
-    	  for (int j=step/4; j<img.cols-step; j+=step/4)
-    	{
-
-        kps.push_back(cv::KeyPoint(float(j), float(i), float(step)));
-    	}
- }
+        	kps.push_back(cv::KeyPoint(float(j), float(i), float(step2)));
+    		}
+	}
+    }
 }
 cv::Mat descs;
 cv::Ptr<cv::xfeatures2d::SIFT> sift = cv::xfeatures2d::SIFT::create(ndesc);
 sift->compute(img,kps,descs);
 return descs;
+}
+
+cv::Mat extractPHOWdescriptors(const cv::Mat& img, const int ndesc,const int step,const int scales,const int iterations_for_PHOW){
+    std::vector<cv:Mat> images_vector;
+    std::vector<cv:Mat> descs;
+    for(int k=0;k<iterations_for_PHOW;k++){
+        step2=img.rows/(pow(2,k));
+        step3=img.cols/(pow(2,k));
+        for(int i=0;i<=img.rows-step2;i+=step2){
+           for(int j=0;j<=img.cols-step3;j+=step3){
+               cv::Mat subimg=img(cv::Range(i,i+step2),cv::Range(j,j+step3));
+               images_vector.push_back(subimg);
+           }
+        }
+     }
+   }
+   for(int i=0;i<images_vector.size();i++){
+     descs.push_back(extractDSIFTdescriptors(images_vector[i],ndesc,step,scales));
+    }
+    cv::Mat output;
+    cv::vconcat(descs,output);
+    return output;
 }

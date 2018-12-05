@@ -27,8 +27,10 @@ int main(int argc,char** argv){
 	cmd.add(surf_threshold);
 	TCLAP::ValueArg<int> nneigh("", "neighbours", "Number of neighbours used for the Knn. Default 1.", false, 1, "int");
 	cmd.add(nneigh);
-	TCLAP::ValueArg<int> steps("", "scale", "In dense SIFT, the distance from you take the keypoints. Default 10.", false, 10, "int");
+	TCLAP::ValueArg<int> steps("", "steps", "In dense SIFT, the distance from you take the keypoints. Default 10.", false, 10, "int");
 	cmd.add(steps);
+        TCLAP::ValueArg<int> scales("", "scales", "In dense SIFT, the number of scales you use. Default 3.", false, 3, "int");
+	cmd.add(scales);
 	cmd.parse(argc, argv);
        
 
@@ -39,7 +41,6 @@ int main(int argc,char** argv){
         classFile.open(classifier.getValue(), cv::FileStorage::READ);
     int keywords,default_k;
     dictFile["keywords"]>>keywords;
-    classFile["default_k"]>>default_k;
     cv::Ptr<cv::ml::KNearest> dict = cv::Algorithm::read<cv::ml::KNearest>(dictFile.root());
     dictFile.release();
     cv::Ptr<cv::ml::KNearest> classif = cv::Algorithm::load<cv::ml::KNearest>(classifier.getValue());
@@ -50,7 +51,7 @@ int main(int argc,char** argv){
 
 
    resize(img, img, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols)));                    
-                    
+
    cv::Mat descs;
            if(descriptor.getValue()=="SIFT")
       		descs = extractSIFTDescriptors(img,  ndesc.getValue());
@@ -60,14 +61,17 @@ int main(int argc,char** argv){
        	 		descs = extractSURFdescriptors(img, surf_threshold.getValue());
       
       		  else{
-        	   if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue());
-       	           else{std::cout<<"NO EXISTE DESCRIPTOR"<<std::endl;return -1;}
+        	   if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
+                   else{
+       	             if(descriptor.getValue()=="PHOW")descs = extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue()); 
+                     else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
                   }
     	}
 
 
    cv::Mat prediction;
    cv::Mat bovw=compute_bovw(dict,keywords,descs);
+   
    classif->predict(bovw,prediction);
    
    std::vector<std::string> categories;
@@ -82,5 +86,6 @@ categories, samples_per_cat)) != 0)
 			<< "' (" << retCode << ")." << std::endl;
 		exit(-1);
 	}
+
    std::cout<<"Image belongs to category "<<prediction.at<float>(0,0)<<" "<<categories[prediction.at<float>(0,0)]<<std::endl;
 }

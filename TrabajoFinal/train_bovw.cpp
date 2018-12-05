@@ -43,6 +43,9 @@ int main(int argc, char * argv[])
 	cmd.add(surf_threshold);
 	TCLAP::ValueArg<int> steps("", "steps", "In dense SIFT, the distance from you take the keypoints. Default 10.", false, 10, "int");
 	cmd.add(steps);
+        TCLAP::ValueArg<int> scales("", "scales", "In dense SIFT, the number of scales you use. Default 3.", false, 3, "int");
+	cmd.add(scales);
+
 	cmd.parse(argc, argv);
 
 	std::vector<std::string> categories;
@@ -124,7 +127,7 @@ int main(int argc, char * argv[])
        			   descs = extractSURFdescriptors(img, surf_threshold.getValue());
       
       		       else{
-        		  if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue());
+        		  if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
        			  else{std::cout<<"NO EXISTE DESCRIPTOR"<<std::endl;return -1;}
       			 }
     			}
@@ -248,7 +251,7 @@ int main(int argc, char * argv[])
        			   descs = extractSURFdescriptors(img, surf_threshold.getValue());
       
       		       else{
-        		  if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue());
+        		  if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
        			  else{std::cout<<"NO EXISTE DESCRIPTOR"<<std::endl;return -1;}
       			 }
     			}
