@@ -234,19 +234,21 @@ return descs;
 }
 
 cv::Mat extractPHOWdescriptors(const cv::Mat& img, const int ndesc,const int step,const int scales,const int iterations_for_PHOW){
-    std::vector<cv:Mat> images_vector;
-    std::vector<cv:Mat> descs;
+    std::vector<cv::Mat> images_vector;
+    std::vector<cv::Mat> descs;
     for(int k=0;k<iterations_for_PHOW;k++){
-        step2=img.rows/(pow(2,k));
-        step3=img.cols/(pow(2,k));
+      
+        int step2=img.rows/(pow(2,k));
+        int step3=img.cols/(pow(2,k));
         for(int i=0;i<=img.rows-step2;i+=step2){
            for(int j=0;j<=img.cols-step3;j+=step3){
                cv::Mat subimg=img(cv::Range(i,i+step2),cv::Range(j,j+step3));
                images_vector.push_back(subimg);
            }
         }
+      
      }
-   }
+
    for(int i=0;i<images_vector.size();i++){
      descs.push_back(extractDSIFTdescriptors(images_vector[i],ndesc,step,scales));
     }

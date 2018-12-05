@@ -45,7 +45,7 @@ int main(int argc, char * argv[])
 	cmd.add(steps);
         TCLAP::ValueArg<int> scales("", "scales", "In dense SIFT, the number of scales you use. Default 3.", false, 3, "int");
 	cmd.add(scales);
-        TCLAP::ValueArg<int> PHOW_level("", "levels", "In PHOW, the levels in which you divide the image. Default 2.", false, 2, "int");
+        TCLAP::ValueArg<int> PHOW_level("", "levels", "In PHOW, the levels in which you divide the image. Default 3.", false, 3, "int");
 	cmd.add(PHOW_level);
 	cmd.parse(argc, argv);
 
@@ -120,19 +120,21 @@ int main(int argc, char * argv[])
                     resize(img, img, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols)));                    
                     
                     cv::Mat descs;
-                    if(descriptor.getValue()=="SIFT")
-      			descs = extractSIFTDescriptors(img,  ndesc.getValue());
+           if(descriptor.getValue()=="SIFT")
+      		descs = extractSIFTDescriptors(img,  ndesc.getValue());
 
-  		     else{
-    			  if(descriptor.getValue()=="SURF")
-       			   descs = extractSURFdescriptors(img, surf_threshold.getValue());
+  	   else{
+    	          if(descriptor.getValue()=="SURF")
+       	 		descs = extractSURFdescriptors(img, surf_threshold.getValue());
       
-      		       else{
-        		  if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
-       			  else{std::cout<<"NO EXISTE DESCRIPTOR"<<std::endl;return -1;}
-      			 }
-    			}
-
+      		  else{
+        	   if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
+                   else{
+       	             if(descriptor.getValue()=="PHOW")descs = extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue(),PHOW_level.getValue()); 
+                     else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
+                  }
+    	      }
+          }
 
 
                     if (train_descs.empty())
@@ -244,18 +246,21 @@ int main(int argc, char * argv[])
                     //cv::Mat descs = extractSIFTDescriptors(img, ndesc.getValue());
                     cv::Mat descs;
 
-                     if(descriptor.getValue()=="SIFT")
-      			descs = extractSIFTDescriptors(img,  ndesc.getValue());
+                        if(descriptor.getValue()=="SIFT")
+      		descs = extractSIFTDescriptors(img,  ndesc.getValue());
 
-  		     else{
-    			  if(descriptor.getValue()=="SURF")
-       			   descs = extractSURFdescriptors(img, surf_threshold.getValue());
+  	   else{
+    	          if(descriptor.getValue()=="SURF")
+       	 		descs = extractSURFdescriptors(img, surf_threshold.getValue());
       
-      		       else{
-        		  if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
-       			  else{std::cout<<"NO EXISTE DESCRIPTOR"<<std::endl;return -1;}
-      			 }
-    			}
+      		  else{
+        	   if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
+                   else{
+       	             if(descriptor.getValue()=="PHOW")descs = extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue(),PHOW_level.getValue()); 
+                     else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
+                  }
+    	      }
+          }
 
 
                     cv::Mat bovw = compute_bovw(dict, keyws.rows, descs);
