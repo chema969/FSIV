@@ -80,4 +80,5 @@ cv::Mat extractDSIFTdescriptors(const cv::Mat& img, const int ndesc,const int st
 
 cv::Mat extractPHOWdescriptors(const cv::Mat& img, const int ndesc,const int step,const int scales,const int iterations_for_PHOW);
 
+
 #endif //__COMMON_CODE_HPP__

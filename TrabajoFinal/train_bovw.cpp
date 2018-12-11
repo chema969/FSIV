@@ -47,6 +47,12 @@ int main(int argc, char * argv[])
 	cmd.add(scales);
         TCLAP::ValueArg<int> PHOW_level("", "levels", "In PHOW, the levels in which you divide the image. Default 3.", false, 3, "int");
 	cmd.add(PHOW_level);
+        TCLAP::ValueArg<std::string> classifierType("", "classifier", "Classifier used. By default is used the KNN.", false, "KNN", "string");
+	cmd.add(classifierType);
+        TCLAP::ValueArg<std::string> kernel("", "kernel", "Kernel for the SVM. By default is used the linear.", false, "linear", "string");
+	cmd.add(kernel);
+        TCLAP::ValueArg<int> number_boosting("", "boosting_number", "The number of weaks classifiers used. By default is 100.", false, 100, "int");
+	cmd.add(number_boosting);
 	cmd.parse(argc, argv);
 
 	std::vector<std::string> categories;
@@ -206,12 +212,45 @@ int main(int argc, char * argv[])
 
         //Create the classifier.
             //Train a KNN classifier using the training bovws like patterns.
-            cv::Ptr<cv::ml::KNearest> knnClassifier = cv::ml::KNearest::create();
-            knnClassifier->setAlgorithmType(cv::ml::KNearest::BRUTE_FORCE);            
-            knnClassifier->setDefaultK(nneigh.getValue());
-            knnClassifier->setIsClassifier(true);
-            classifier = knnClassifier;
 
+            
+            if(classifierType.getValue()=="KNN"){
+              cv::Ptr<cv::ml::KNearest> knnClassifier = cv::ml::KNearest::create();
+              knnClassifier->setAlgorithmType(cv::ml::KNearest::BRUTE_FORCE);            
+              knnClassifier->setDefaultK(nneigh.getValue());
+              knnClassifier->setIsClassifier(true);
+              classifier = knnClassifier;
+             }
+            else{
+              if(classifierType.getValue()=="SVM"){
+                 cv::Ptr<cv::ml::SVM> classifSVM = cv::ml::SVM::create();
+                 if(kernel.getValue()=="linear")
+                   classifSVM->setKernel(cv::ml::SVM::LINEAR);
+                 if(kernel.getValue()=="polynomial")
+                   classifSVM->setKernel(cv::ml::SVM::POLY);
+                 if(kernel.getValue()=="chi2")
+                   classifSVM->setKernel(cv::ml::SVM::CHI2);
+                 if(kernel.getValue()=="RBF")
+                   classifSVM->setKernel(cv::ml::SVM::RBF);
+                 if(kernel.getValue()=="sigmoid")
+                   classifSVM->setKernel(cv::ml::SVM::SIGMOID);
+                 if(kernel.getValue()=="inter")
+                   classifSVM->setKernel(cv::ml::SVM::INTER);
+                 classifSVM->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));
+                 classifSVM->setType(cv::ml::SVM::C_SVC);
+                 classifier=classifSVM;
+              }
+            else{
+              if(classifierType.getValue()=="BOOSTING"){
+                 cv::Ptr<cv::ml::Boost> classif = cv::ml::Boost::create(); 
+                 classif->setWeakCount(number_boosting.getValue());
+                 classifier=classif;
+                }
+             else{
+                 std::cout<<"Classifier not found"<<std::endl; return 0;
+                }
+             }
+        }
         cv::Mat train_labels(train_labels_v);
         classifier->train(train_bovw, cv::ml::ROW_SAMPLE, train_labels);
 

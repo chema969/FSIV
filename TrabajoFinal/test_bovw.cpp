@@ -17,8 +17,8 @@ int main(int argc,char** argv){
 	cmd.add(configFile);
         TCLAP::ValueArg<std::string> dictionary("", "dict", "Dictionary of the boVw.", false, "../dictionary.yml", "pathname");
         cmd.add(dictionary);
-	TCLAP::ValueArg<std::string> classifier("", "classifier", "Classifier YML file.", false, "../classifier.yml", "pathname");
-	cmd.add(classifier);
+	TCLAP::ValueArg<std::string> classifierYML("", "classifierYML", "Classifier YML file.", false, "../classifier.yml", "pathname");
+	cmd.add(classifierYML);
        TCLAP::ValueArg<std::string> descriptor("", "descriptor", "Descriptor used for test. Default SIFT.", false, "SIFT", "string");
 	cmd.add(descriptor);
         TCLAP::ValueArg<int> ndesc("", "ndesc", "[SIFT] Number of descriptors per image. Value 0 means extract all. Default 0.", false, 0, "int");
@@ -33,6 +33,12 @@ int main(int argc,char** argv){
 	cmd.add(scales);
         TCLAP::ValueArg<int> PHOW_level("", "levels", "In PHOW, the levels in which you divide the image. Default 3.", false, 3, "int");
 	cmd.add(PHOW_level);
+        TCLAP::ValueArg<std::string> classifierType("", "classifier", "Classifier used. By default is used the KNN.", false, "KNN", "string");
+	cmd.add(classifierType);
+        TCLAP::ValueArg<std::string> kernel("", "kernel", "Kernel for the SVM. By default is used the linear.", false, "linear", "string");
+	cmd.add(kernel);
+        TCLAP::ValueArg<int> number_boosting("", "boosting_number", "The number of weaks classifiers used. By default is 100.", false, 100, "int");
+	cmd.add(number_boosting);
 	cmd.parse(argc, argv);
        
 
@@ -40,15 +46,51 @@ int main(int argc,char** argv){
         cv::FileStorage dictFile;
         dictFile.open(dictionary.getValue(), cv::FileStorage::READ);
         cv::FileStorage classFile;
-        classFile.open(classifier.getValue(), cv::FileStorage::READ);
+        classFile.open(classifierYML.getValue(), cv::FileStorage::READ);
     int keywords,default_k;
     dictFile["keywords"]>>keywords;
     cv::Ptr<cv::ml::KNearest> dict = cv::Algorithm::read<cv::ml::KNearest>(dictFile.root());
     dictFile.release();
-    cv::Ptr<cv::ml::KNearest> classif = cv::Algorithm::load<cv::ml::KNearest>(classifier.getValue());
-    classFile.release();
+    cv::Ptr<cv::ml::StatModel> classifier;
 
-   classif->setDefaultK(nneigh.getValue());
+     if(classifierType.getValue()=="SVM"){
+         cv::Ptr<cv::ml::SVM> classifSVM;
+          classifSVM = cv::Algorithm::load<cv::ml::SVM>(classifierYML.getValue());
+          if(kernel.getValue()=="linear")
+            classifSVM->setKernel(cv::ml::SVM::LINEAR);
+          if(kernel.getValue()=="polynomial")
+            classifSVM->setKernel(cv::ml::SVM::POLY);
+          if(kernel.getValue()=="chi2")
+            classifSVM->setKernel(cv::ml::SVM::CHI2);
+          if(kernel.getValue()=="RBF")
+            classifSVM->setKernel(cv::ml::SVM::RBF);
+          if(kernel.getValue()=="sigmoid")
+            classifSVM->setKernel(cv::ml::SVM::SIGMOID);
+          if(kernel.getValue()=="inter")
+            classifSVM->setKernel(cv::ml::SVM::INTER);
+          classifier=classifSVM;
+          }
+     else{ 
+         if(classifierType.getValue()=="KNN"){
+            cv::Ptr<cv::ml::KNearest> classif; 
+            classif = cv::Algorithm::load<cv::ml::KNearest>(classifierYML.getValue());
+            classif->setDefaultK(nneigh.getValue());
+            classifier=classif;
+          }
+         else{
+           if(classifierType.getValue()=="BOOSTING"){
+               cv::Ptr<cv::ml::Boost> classif = cv::Algorithm::load<cv::ml::Boost>(classifierYML.getValue()); 
+               classif->setWeakCount(number_boosting.getValue());
+               classifier=classif;
+           }
+           else{
+               std::cout<<"Classifier not found"<<std::endl; return 0;
+              }
+         }
+     }
+   classFile.release();
+
+   
    cv::Mat img=cv::imread(imgArg.getValue(), cv::IMREAD_GRAYSCALE);
 
 
@@ -73,8 +115,7 @@ int main(int argc,char** argv){
 
    cv::Mat prediction;
    cv::Mat bovw=compute_bovw(dict,keywords,descs);
-   
-   classif->predict(bovw,prediction);
+   classifier->predict(bovw,prediction);
    
    std::vector<std::string> categories;
    std::vector<int> samples_per_cat;
