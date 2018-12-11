@@ -7,11 +7,12 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/ml/ml.hpp>
+#include <opencv2/videoio.hpp>
 #include "common_code.hpp"
 int main(int argc,char** argv){
    TCLAP::CmdLine cmd("Testing the results with a given image", ' ', "0.0");
 
-	TCLAP::ValueArg<std::string> imgArg("", "img", "input image.", true, "", "pathname");
+	TCLAP::ValueArg<std::string> imgArg("", "img", "input image.", false, "", "pathname");
 	cmd.add(imgArg);
 	TCLAP::ValueArg<std::string> configFile("", "config_file", "configuration file for the dataset.", false, "101_ObjectCategories_conf.txt", "pathname");
 	cmd.add(configFile);
@@ -39,6 +40,9 @@ int main(int argc,char** argv){
 	cmd.add(kernel);
         TCLAP::ValueArg<int> number_boosting("", "boosting_number", "The number of weaks classifiers used. By default is 100.", false, 100, "int");
 	cmd.add(number_boosting);
+        TCLAP::ValueArg<std::string> videoArg("", "video", "input video.", false, "", "pathname");
+	cmd.add(videoArg);
+
 	cmd.parse(argc, argv);
        
 
@@ -89,8 +93,18 @@ int main(int argc,char** argv){
          }
      }
    classFile.release();
-
-   
+   std::vector<std::string> categories;
+   std::vector<int> samples_per_cat;
+   int retCode;
+   if ((retCode = load_dataset_information(configFile.getValue(), 
+   categories, samples_per_cat)) != 0)
+	{
+		std::cerr << "Error: could not load dataset information from '"
+			<< configFile.getValue()
+			<< "' (" << retCode << ")." << std::endl;
+		exit(-1);
+	}
+   if(imgArg.getValue()!=""){
    cv::Mat img=cv::imread(imgArg.getValue(), cv::IMREAD_GRAYSCALE);
 
 
@@ -116,19 +130,45 @@ int main(int argc,char** argv){
    cv::Mat prediction;
    cv::Mat bovw=compute_bovw(dict,keywords,descs);
    classifier->predict(bovw,prediction);
-   
-   std::vector<std::string> categories;
-   std::vector<int> samples_per_cat;
-   int retCode;
-   std::cout<<configFile.getValue()<<std::endl;
-   if ((retCode = load_dataset_information(configFile.getValue(), 
-categories, samples_per_cat)) != 0)
-	{
-		std::cerr << "Error: could not load dataset information from '"
-			<< configFile.getValue()
-			<< "' (" << retCode << ")." << std::endl;
-		exit(-1);
-	}
 
    std::cout<<"Image belongs to category "<<prediction.at<float>(0,0)<<" "<<categories[prediction.at<float>(0,0)]<<std::endl;
+   }
+
+
+  if(videoArg.getValue()!=""){
+      cv::Mat frame;
+      cv::VideoCapture video(videoArg.getValue());
+       while(video.read(frame)){
+         cv::Mat img;
+         cv::cvtColor(frame,img,cv::COLOR_RGB2GRAY);
+
+        resize(img, img, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols)));                    
+
+        cv::Mat descs;
+           if(descriptor.getValue()=="SIFT")
+      		descs = extractSIFTDescriptors(img,  ndesc.getValue());
+
+  	   else{
+    	          if(descriptor.getValue()=="SURF")
+       	 		descs = extractSURFdescriptors(img, surf_threshold.getValue());
+      
+      		  else{
+        	   if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
+                   else{
+       	             if(descriptor.getValue()=="PHOW")descs = extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue(),PHOW_level.getValue()); 
+                     else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
+                  }
+    	      }
+          }
+
+        cv::Mat prediction;
+        cv::Mat bovw=compute_bovw(dict,keywords,descs);
+        classifier->predict(bovw,prediction);
+        int a=frame.cols-50;
+        putText(frame,categories[prediction.at<float>(0,0)],cv::Point(10,a), cv::FONT_HERSHEY_SIMPLEX, 4,(255,255,255),2);
+        cv::imshow("Live", frame);
+        if (cv::waitKey(5) >= 0)
+           break;
+      }
+  }
 }
