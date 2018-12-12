@@ -126,7 +126,6 @@ int main(int argc,char** argv){
                   }
     	      }
           }
-
    cv::Mat prediction;
    cv::Mat bovw=compute_bovw(dict,keywords,descs);
    classifier->predict(bovw,prediction);
@@ -155,17 +154,21 @@ int main(int argc,char** argv){
       		  else{
         	   if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
                    else{
-       	             if(descriptor.getValue()=="PHOW")descs = extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue(),PHOW_level.getValue()); 
-                     else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
+       	            // if(descriptor.getValue()=="PHOW")descs = extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue(),PHOW_level.getValue()); 
+                     std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;
                   }
     	      }
           }
 
         cv::Mat prediction;
-        cv::Mat bovw=compute_bovw(dict,keywords,descs);
+        cv::Mat bovw
+        if(descriptor.getValue()=="PHOW")
+            bovw=extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue(),PHOW_level.getValue(),dict); 
+        else bovw=compute_bovw(dict,keywords,descs);
         classifier->predict(bovw,prediction);
-        int a=frame.cols-50;
-        putText(frame,categories[prediction.at<float>(0,0)],cv::Point(10,a), cv::FONT_HERSHEY_SIMPLEX, 4,(255,255,255),2);
+        int a=frame.rows-50;
+        int b=frame.cols-50;
+        cv::putText(frame,categories[prediction.at<float>(0,0)].c_str(),cv::Point(50,a), cv::FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv::LINE_8);
         cv::imshow("Live", frame);
         if (cv::waitKey(5) >= 0)
            break;

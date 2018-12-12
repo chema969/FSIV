@@ -51,6 +51,8 @@ int main(int argc, char * argv[])
 	cmd.add(classifierType);
         TCLAP::ValueArg<std::string> kernel("", "kernel", "Kernel for the SVM. By default is used the linear.", false, "linear", "string");
 	cmd.add(kernel);
+        TCLAP::ValueArg<int> c_value("", "c_value", "The margin of the SVM. By default is 100.", false, 100, "int");
+	cmd.add(c_value);
         TCLAP::ValueArg<int> number_boosting("", "boosting_number", "The number of weaks classifiers used. By default is 100.", false, 100, "int");
 	cmd.add(number_boosting);
 	cmd.parse(argc, argv);
@@ -142,7 +144,6 @@ int main(int argc, char * argv[])
     	      }
           }
 
-
                     if (train_descs.empty())
                         train_descs = descs;
                     else
@@ -187,7 +188,7 @@ int main(int argc, char * argv[])
         std::clog << "\t\tGenerating the a bovw descriptor per train image." << std::endl;
         int row_start = 0;
         cv::Mat train_bovw;
-        std::vector<float> train_labels_v;
+        std::vector<int> train_labels_v;
         train_labels_v.resize(0);
         for (size_t c = 0, i = 0; c < train_samples.size(); ++c)
             for (size_t s = 0; s < train_samples[c].size(); ++s, ++i)
@@ -226,8 +227,9 @@ int main(int argc, char * argv[])
                  cv::Ptr<cv::ml::SVM> classifSVM = cv::ml::SVM::create();
                  if(kernel.getValue()=="linear")
                    classifSVM->setKernel(cv::ml::SVM::LINEAR);
-                 if(kernel.getValue()=="polynomial")
+                 if(kernel.getValue()=="polynomial"){
                    classifSVM->setKernel(cv::ml::SVM::POLY);
+                   classifSVM->setDegree(1);}
                  if(kernel.getValue()=="chi2")
                    classifSVM->setKernel(cv::ml::SVM::CHI2);
                  if(kernel.getValue()=="RBF")
@@ -238,11 +240,13 @@ int main(int argc, char * argv[])
                    classifSVM->setKernel(cv::ml::SVM::INTER);
                  classifSVM->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));
                  classifSVM->setType(cv::ml::SVM::C_SVC);
+                 classifSVM->setC(c_value.getValue());
                  classifier=classifSVM;
               }
             else{
               if(classifierType.getValue()=="BOOSTING"){
                  cv::Ptr<cv::ml::Boost> classif = cv::ml::Boost::create(); 
+		 classif->setBoostType(cv::ml::Boost::DISCRETE);
                  classif->setWeakCount(number_boosting.getValue());
                  classifier=classif;
                 }
@@ -253,7 +257,6 @@ int main(int argc, char * argv[])
         }
         cv::Mat train_labels(train_labels_v);
         classifier->train(train_bovw, cv::ml::ROW_SAMPLE, train_labels);
-
         //free not needed memory.
         train_bovw.release();
         train_labels_v.resize(0);

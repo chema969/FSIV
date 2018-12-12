@@ -173,6 +173,14 @@ void compute_recognition_rate(const cv::Mat& cmat, double& mean, double& dev)
     dev = sqrt(dev/double(cmat.rows) - mean*mean);
 }
 
+cv::Mat extractDAISYDescriptors(const cv::Mat& img, const int ndesc)
+{
+    cv::Ptr<cv::xfeatures2d::DAISY> daisy = cv::xfeatures2d::DAISY::create();
+    std::vector<cv::KeyPoint> kps;
+    cv::Mat descs;
+    sift->detectAndCompute(img, cv::noArray(), kps, descs);
+    return descs;
+}
 
 cv::Mat extractSIFTDescriptors(const cv::Mat& img, const int ndesc)
 {
@@ -233,7 +241,7 @@ sift->compute(img,kps,descs);
 return descs;
 }
 
-cv::Mat extractPHOWdescriptors(const cv::Mat& img, const int ndesc,const int step,const int scales,const int iterations_for_PHOW){
+cv::Mat extractPHOWdescriptors(const cv::Mat& img, const int ndesc,const int step,const int scales,const int iterations_for_PHOW,const cv::Ptr<cv::ml::KNearest>& dict){
     std::vector<cv::Mat> images_vector;
     std::vector<cv::Mat> descs;
     for(int k=0;k<iterations_for_PHOW;k++){
@@ -250,7 +258,8 @@ cv::Mat extractPHOWdescriptors(const cv::Mat& img, const int ndesc,const int ste
      }
 
    for(int i=0;i<images_vector.size();i++){
-     descs.push_back(extractDSIFTdescriptors(images_vector[i],ndesc,step,scales));
+     cv::Mat xd=extractDSIFTdescriptors(images_vector[i],ndesc,step,scales);
+     descs.push_back(compute_bovw(dict,keywords,xd));
     }
     cv::Mat output;
     cv::vconcat(descs,output);
