@@ -53,6 +53,8 @@ int main(int argc, char * argv[])
 	cmd.add(kernel);
         TCLAP::ValueArg<int> c_value("", "c_value", "The margin of the SVM. By default is 100.", false, 100, "int");
 	cmd.add(c_value);
+        TCLAP::SwitchArg PHOWAllowed("", "PHOW", "Allow using PHOW. By default is false.");
+	cmd.add(PHOWAllowed);
         TCLAP::ValueArg<int> number_boosting("", "boosting_number", "The number of weaks classifiers used. By default is 100.", false, 100, "int");
 	cmd.add(number_boosting);
 	cmd.parse(argc, argv);
@@ -138,7 +140,7 @@ int main(int argc, char * argv[])
       		  else{
         	   if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
                    else{
-       	             if(descriptor.getValue()=="PHOW")descs = extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue(),PHOW_level.getValue()); 
+       	             if(descriptor.getValue()=="DAISY")descs = extractDAISYDescriptors(img,steps.getValue(),scales.getValue()); 
                      else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
                   }
     	      }
@@ -189,7 +191,9 @@ int main(int argc, char * argv[])
         int row_start = 0;
         cv::Mat train_bovw;
         std::vector<int> train_labels_v;
-        train_labels_v.resize(0);
+        train_labels_v.resize(0);///AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+
+   if(!PHOWAllowed.getValue()){
         for (size_t c = 0, i = 0; c < train_samples.size(); ++c)
             for (size_t s = 0; s < train_samples[c].size(); ++s, ++i)
             {
@@ -206,14 +210,93 @@ int main(int argc, char * argv[])
                     train_bovw = dst;
                 }
             }
+     }
+    else{
+          cv::Mat perIMG;
+         int rr=0;
+         for (size_t c = 0; c < train_samples.size(); ++c)
+        {
+            
+            std::clog << "  " << std::setfill(' ') << std::setw(3) << (c * 100) / train_samples.size() << " %   \015";
+            for (size_t s = 0; s < train_samples[c].size(); ++s)
+            {
+                
+                std::string filename = compute_sample_filename(basenameArg.getValue(), categories[c], train_samples[c][s]);
+                cv::Mat img = cv::imread(filename, cv::IMREAD_GRAYSCALE);
+                if (img.empty())
+                {
+                    std::cerr << "Error: could not read image '" << filename << "'." << std::endl;
+                    exit(-1);
+                }
+                else
+                {
+                    // Fix size
+                    resize(img, img, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols)));  
+                    std::vector<cv::Mat> images_vector;
+                                         train_labels_v.push_back(c);
+   			 for(int k=0;k<PHOW_level.getValue();k++){
+      
+        			int step2=img.rows/(pow(2,k));
+       				int step3=img.cols/(pow(2,k));
+      				  for(int i=0;i<=img.rows-step2;i+=step2){
+                                    for(int j=0;j<=img.cols-step3;j+=step3){
+                                       cv::Mat subimg=img(cv::Range(i,i+step2),cv::Range(j,j+step3));
+                                       resize(subimg, subimg, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols))); 
+                                       images_vector.push_back(subimg);
+                                    }
+                                  }
+      
+                          }     
+                 for(int i=0;i<images_vector.size();i++){
+                    cv::Mat descs;
+                    if(descriptor.getValue()=="SIFT")
+      		      descs = extractSIFTDescriptors(images_vector[i],  ndesc.getValue());
 
+  	            else{
+    	              if(descriptor.getValue()=="SURF")
+       	 		descs = extractSURFdescriptors(images_vector[i], surf_threshold.getValue());
+      
+      		        else{
+        	          if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(images_vector[i],ndesc.getValue(),steps.getValue(),scales.getValue());
+                          else{
+       	                     if(descriptor.getValue()=="DAISY")descs = extractDAISYDescriptors(images_vector[i],steps.getValue(),scales.getValue()); 
+                             else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
+                          }
+    	                }
+                     }
+
+                     cv::Mat bovw = compute_bovw(dict, keyws.rows, descs);
+                      if (perIMG.empty())
+                         perIMG = bovw;
+                     else
+                     {
+                       cv::Mat dst;
+                       cv::hconcat(perIMG, bovw, dst);
+                       perIMG = dst;
+                    }
+                   }
+                }
+              if (train_bovw.empty())
+                         train_bovw = perIMG;
+              else
+                     {
+                       cv::Mat dst;
+                       cv::vconcat(train_bovw, perIMG, dst);
+                       train_bovw = dst;
+                    }
+             cv::Mat aux;
+              perIMG=aux;
+            }
+            
+        }
+     }
         //free not needed memory
         train_descs.release();
         cv::Ptr<cv::ml::StatModel> classifier;
 
         //Create the classifier.
             //Train a KNN classifier using the training bovws like patterns.
-
+         std::clog<<"\tPutting the classifier parameters\n";
             
             if(classifierType.getValue()=="KNN"){
               cv::Ptr<cv::ml::KNearest> knnClassifier = cv::ml::KNearest::create();
@@ -271,6 +354,7 @@ int main(int argc, char * argv[])
         cv::Mat test_bovw;
         std::vector<float> true_labels;
         true_labels.resize(0);
+                      cv::Mat perIMG;
         for (size_t c = 0; c < test_samples.size(); ++c)
         {
             std::clog << "  " << std::setfill(' ') << std::setw(3) << (c * 100) / train_samples.size() << " %   \015";
@@ -284,7 +368,7 @@ int main(int argc, char * argv[])
                 {
                     // Fix size
                     resize(img, img, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols)));
-
+                if(!PHOWAllowed.getValue()){
                     //cv::Mat descs = extractSIFTDescriptors(img, ndesc.getValue());
                     cv::Mat descs;
 
@@ -292,17 +376,18 @@ int main(int argc, char * argv[])
       		descs = extractSIFTDescriptors(img,  ndesc.getValue());
 
   	   else{
+                 
     	          if(descriptor.getValue()=="SURF")
        	 		descs = extractSURFdescriptors(img, surf_threshold.getValue());
       
-      		  else{
-        	   if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
-                   else{
-       	             if(descriptor.getValue()=="PHOW")descs = extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue(),PHOW_level.getValue()); 
-                     else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
-                  }
-    	      }
-          }
+      		   else{
+        	    if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
+                      else{
+       	                if(descriptor.getValue()=="DAISY")descs = extractDAISYDescriptors(img,steps.getValue(),scales.getValue()); 
+                        else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
+                       }
+    	               }
+                   }
 
 
                     cv::Mat bovw = compute_bovw(dict, keyws.rows, descs);
@@ -316,7 +401,65 @@ int main(int argc, char * argv[])
                     }
                     true_labels.push_back(c);
                 }
+               else{
+                         true_labels.push_back(c);
+                         std::vector<cv::Mat> images_vector;
+   			 for(int k=0;k<PHOW_level.getValue();k++){
+      
+        			int step2=img.rows/(pow(2,k));
+       				int step3=img.cols/(pow(2,k));
+      				  for(int i=0;i<=img.rows-step2;i+=step2){
+                                    for(int j=0;j<=img.cols-step3;j+=step3){
+                                       cv::Mat subimg=img(cv::Range(i,i+step2),cv::Range(j,j+step3));
+                                       resize(subimg, subimg, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols))); 
+                                       images_vector.push_back(subimg);
+                                    }
+                                  }
+      
+                          }     
+                 for(int i=0;i<images_vector.size();i++){
+                    cv::Mat descs;
+                    if(descriptor.getValue()=="SIFT")
+      		      descs = extractSIFTDescriptors(images_vector[i],  ndesc.getValue());
+
+  	            else{
+    	              if(descriptor.getValue()=="SURF")
+       	 		descs = extractSURFdescriptors(images_vector[i], surf_threshold.getValue());
+      
+      		        else{
+        	          if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(images_vector[i],ndesc.getValue(),steps.getValue(),scales.getValue());
+                          else{
+       	                     if(descriptor.getValue()=="DAISY")descs = extractDAISYDescriptors(images_vector[i],steps.getValue(),scales.getValue()); 
+                             else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
+                          }
+    	                }
+                     }
+
+                     cv::Mat bovw = compute_bovw(dict, keyws.rows, descs);
+                      if (perIMG.empty())
+                         perIMG = bovw;
+                     else
+                     {
+                       cv::Mat dst;
+                       cv::hconcat(perIMG, bovw, dst);
+                       perIMG = dst;
+                    }
+                   }
+                }   
+              }
+            if(PHOWAllowed.getValue()){
+               if (test_bovw.empty())
+                         test_bovw = perIMG;
+              else
+                     {
+                       cv::Mat dst;
+                       cv::vconcat(test_bovw, perIMG, dst);
+                       test_bovw = dst;
+                    }
+             cv::Mat aux;
+              perIMG=aux;
             }
+          }
         }
         std::clog << std::endl;
         std::clog << "\tThere are " << test_bovw.rows << " test images." << std::endl;
@@ -326,7 +469,7 @@ int main(int argc, char * argv[])
         cv::Mat predicted_labels;
 
         classifier->predict(test_bovw, predicted_labels);
-
+        std::clog<<predicted_labels.rows<<" == "<<true_labels.size()<<std::endl;
         CV_Assert(predicted_labels.depth() == CV_32F);
         CV_Assert(predicted_labels.rows == test_bovw.rows);
         CV_Assert(predicted_labels.rows == true_labels.size());

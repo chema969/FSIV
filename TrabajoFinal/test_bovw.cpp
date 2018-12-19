@@ -42,7 +42,8 @@ int main(int argc,char** argv){
 	cmd.add(number_boosting);
         TCLAP::ValueArg<std::string> videoArg("", "video", "input video.", false, "", "pathname");
 	cmd.add(videoArg);
-
+        TCLAP::SwitchArg PHOWAllowed("", "PHOW", "Allow using PHOW. By default is false.");
+	cmd.add(PHOWAllowed);
 	cmd.parse(argc, argv);
        
 
@@ -108,8 +109,9 @@ int main(int argc,char** argv){
    cv::Mat img=cv::imread(imgArg.getValue(), cv::IMREAD_GRAYSCALE);
 
 
-   resize(img, img, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols)));                    
-
+   resize(img, img, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols)));     
+   cv::Mat bovw;               
+  if(!PHOWAllowed.getValue()){
    cv::Mat descs;
            if(descriptor.getValue()=="SIFT")
       		descs = extractSIFTDescriptors(img,  ndesc.getValue());
@@ -121,13 +123,61 @@ int main(int argc,char** argv){
       		  else{
         	   if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
                    else{
-       	             if(descriptor.getValue()=="PHOW")descs = extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue(),PHOW_level.getValue()); 
+       	             if(descriptor.getValue()=="DAISY")descs = extractDAISYDescriptors(img,steps.getValue(),scales.getValue()); 
                      else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
                   }
     	      }
           }
+    bovw=compute_bovw(dict,keywords,descs);
+   }
+   else{   
+                    // Fix size
+                    std::vector<cv::Mat> images_vector;
+   			 for(int k=0;k<PHOW_level.getValue();k++){
+      
+        			int step2=img.rows/(pow(2,k));
+       				int step3=img.cols/(pow(2,k));
+      				  for(int i=0;i<=img.rows-step2;i+=step2){
+                                    for(int j=0;j<=img.cols-step3;j+=step3){
+                                       cv::Mat subimg=img(cv::Range(i,i+step2),cv::Range(j,j+step3));
+                                       resize(subimg, subimg, cv::Size(IMG_WIDTH, round(IMG_WIDTH*img.rows / img.cols))); 
+                                       images_vector.push_back(subimg);
+                                    }
+                                  }
+      
+                          }     
+                 for(int i=0;i<images_vector.size();i++){
+                    cv::Mat aux;
+                    if(descriptor.getValue()=="SIFT")
+      		      aux = extractSIFTDescriptors(images_vector[i],  ndesc.getValue());
+
+  	            else{
+    	              if(descriptor.getValue()=="SURF")
+       	 		aux = extractSURFdescriptors(images_vector[i], surf_threshold.getValue());
+      
+      		        else{
+        	          if(descriptor.getValue()=="DSIFT")aux = extractDSIFTdescriptors(images_vector[i],ndesc.getValue(),steps.getValue(),scales.getValue());
+                          else{
+       	                     if(descriptor.getValue()=="DAISY")aux = extractDAISYDescriptors(images_vector[i],steps.getValue(),scales.getValue()); 
+                             else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
+                          }
+    	                }
+                     }
+
+                    compute_bovw(dict, keywords, aux);
+                      if (bovw.empty())
+                         bovw = aux;
+                     else
+                     {
+                       cv::Mat dst;
+                       cv::hconcat(aux, bovw, dst);
+                       bovw = dst;
+                    }
+              }
+         }
    cv::Mat prediction;
-   cv::Mat bovw=compute_bovw(dict,keywords,descs);
+  
+   
    classifier->predict(bovw,prediction);
 
    std::cout<<"Image belongs to category "<<prediction.at<float>(0,0)<<" "<<categories[prediction.at<float>(0,0)]<<std::endl;
@@ -153,18 +203,16 @@ int main(int argc,char** argv){
       
       		  else{
         	   if(descriptor.getValue()=="DSIFT")descs = extractDSIFTdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue());
-                   else{
-       	            // if(descriptor.getValue()=="PHOW")descs = extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue(),PHOW_level.getValue()); 
-                     std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;
+                  else{
+       	             if(descriptor.getValue()=="DAISY")descs = extractDAISYDescriptors(img,steps.getValue(),scales.getValue()); 
+                     else{std::cout<<"NO DESCRIPTOR"<<std::endl;return -1;}
                   }
     	      }
           }
 
         cv::Mat prediction;
-        cv::Mat bovw
-        if(descriptor.getValue()=="PHOW")
-            bovw=extractPHOWdescriptors(img,ndesc.getValue(),steps.getValue(),scales.getValue(),PHOW_level.getValue(),dict); 
-        else bovw=compute_bovw(dict,keywords,descs);
+        cv::Mat bovw;
+        bovw=compute_bovw(dict,keywords,descs);
         classifier->predict(bovw,prediction);
         int a=frame.rows-50;
         int b=frame.cols-50;

@@ -78,8 +78,8 @@ cv::Mat extractSURFdescriptors(const cv::Mat& img, const int ndesc);
 
 cv::Mat extractDSIFTdescriptors(const cv::Mat& img, const int ndesc,const int step,const int scales);
 
-cv::Mat extractPHOWdescriptors(const cv::Mat& img, const int ndesc,const int step,const int scales,const int iterations_for_PHOW,const cv::Ptr<cv::ml::KNearest>& dict);
+//cv::Mat extractPHOWdescriptors(const cv::Mat& img, const int ndesc,const int step,const int scales,const int iterations_for_PHOW,const cv::Ptr<cv::ml::KNearest>& dict);
 
-cv::Mat extractDAISYDescriptors(const cv::Mat& img, const int ndesc);
+cv::Mat extractDAISYDescriptors(const cv::Mat& img,const int step,const int scales);
 
 #endif //__COMMON_CODE_HPP__

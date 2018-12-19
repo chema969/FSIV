@@ -173,12 +173,26 @@ void compute_recognition_rate(const cv::Mat& cmat, double& mean, double& dev)
     dev = sqrt(dev/double(cmat.rows) - mean*mean);
 }
 
-cv::Mat extractDAISYDescriptors(const cv::Mat& img, const int ndesc)
+cv::Mat extractDAISYDescriptors(const cv::Mat& img,const int step,const int scales)
 {
     cv::Ptr<cv::xfeatures2d::DAISY> daisy = cv::xfeatures2d::DAISY::create();
     std::vector<cv::KeyPoint> kps;
+     int step2;
+    for(int k=0;k<scales;k++){
+    step2=step/(pow(2,k));
+    if(step2!=0){
+	for (int i=step2; i<img.rows-step2; i+=step2)
+	{
+    		for (int j=step2; j<img.cols-step2; j+=step2)
+    		{
+
+        	kps.push_back(cv::KeyPoint(float(j), float(i), float(step2)));
+    		}
+	}
+    }
+}
     cv::Mat descs;
-    sift->detectAndCompute(img, cv::noArray(), kps, descs);
+    daisy->compute(img, kps, descs);
     return descs;
 }
 
@@ -198,7 +212,7 @@ compute_bovw (const cv::Ptr<cv::ml::KNearest>& dict, const int dict_size, cv::Ma
     cv::Mat bovw = cv::Mat::zeros(1, dict_size, CV_32F);
     cv::Mat vwords;
     CV_Assert(img_descs.type()==CV_32F);
-    dict->findNearest(img_descs, 1, vwords);
+    dict->findNearest(img_descs, 1, vwords); vwords.convertTo(vwords,CV_32F);
     CV_Assert(vwords.depth()==CV_32F);
     for (int i=0;i<img_descs.rows;++i)
         bovw.at<float>(vwords.at<float>(i))++;
@@ -240,7 +254,7 @@ cv::Ptr<cv::xfeatures2d::SIFT> sift = cv::xfeatures2d::SIFT::create(ndesc);
 sift->compute(img,kps,descs);
 return descs;
 }
-
+/*
 cv::Mat extractPHOWdescriptors(const cv::Mat& img, const int ndesc,const int step,const int scales,const int iterations_for_PHOW,const cv::Ptr<cv::ml::KNearest>& dict){
     std::vector<cv::Mat> images_vector;
     std::vector<cv::Mat> descs;
@@ -264,4 +278,4 @@ cv::Mat extractPHOWdescriptors(const cv::Mat& img, const int ndesc,const int ste
     cv::Mat output;
     cv::vconcat(descs,output);
     return output;
-}
+}*/
